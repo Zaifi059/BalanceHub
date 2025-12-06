@@ -1,0 +1,735 @@
+{% extends "base.html" %}
+
+{% block title %}Field Reports - {{ session.current_business.name if session.get('current_business') else 'Business Accounts' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .field-reports-modern {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .field-reports-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .field-reports-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .field-reports-title {
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .field-reports-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin: 10px 0 0 0;
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .quick-action-btn {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .quick-action-btn:hover {
+        background: rgba(255,255,255,0.3);
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+
+    .field-reports-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        text-align: center;
+        border-left: 4px solid var(--accent-color);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .stat-card.total { --accent-color: #17a2b8; }
+    .stat-card.completed { --accent-color: #28a745; }
+    .stat-card.pending { --accent-color: #ffc107; }
+    .stat-card.satisfaction { --accent-color: #6f42c1; }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 5px;
+    }
+
+    .field-reports-filters {
+        background: white;
+        padding: 25px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        margin-bottom: 25px;
+    }
+
+    .filter-row {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        align-items: end;
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filter-label {
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+        font-size: 0.9rem;
+    }
+
+    .filter-input {
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        padding: 12px 16px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+    }
+
+    .filter-input:focus {
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+    }
+
+    .field-reports-table {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .table-header {
+        background: #f8f9fa;
+        padding: 20px 30px;
+        border-bottom: 1px solid #e9ecef;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .table-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .table-actions {
+        display: flex;
+        gap: 10px;
+    }
+
+    .table-btn {
+        background: #667eea;
+        border: none;
+        color: white;
+        padding: 8px 16px;
+        border-radius: 20px;
+        font-size: 0.9rem;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 5px;
+    }
+
+    .table-btn:hover {
+        background: #5a6fd8;
+        transform: translateY(-1px);
+    }
+
+    .table-btn.secondary {
+        background: #6c757d;
+    }
+
+    .table-btn.secondary:hover {
+        background: #5a6268;
+    }
+
+    .table-responsive {
+        overflow-x: auto;
+    }
+
+    .table {
+        margin: 0;
+        width: 100%;
+    }
+
+    .table thead th {
+        background: #f8f9fa;
+        border: none;
+        font-weight: 600;
+        color: #2c3e50;
+        padding: 15px 20px;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .table tbody td {
+        padding: 15px 20px;
+        border-bottom: 1px solid #f1f3f4;
+        vertical-align: middle;
+    }
+
+    .table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .report-number {
+        font-weight: 600;
+        color: #2c3e50;
+        font-family: 'Courier New', monospace;
+    }
+
+    .technician-name {
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .technician-email {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .customer-name {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+
+    .customer-email {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .service-type {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+
+    .completion-time {
+        font-weight: 500;
+        color: #2c3e50;
+    }
+
+    .status-badge {
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-completed {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-in_progress {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .status-pending_review {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .status-scheduled {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .rating-stars {
+        display: flex;
+        gap: 2px;
+    }
+
+    .star {
+        color: #ffc107;
+        font-size: 1rem;
+    }
+
+    .star.empty {
+        color: #e9ecef;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 15px;
+        font-size: 0.8rem;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .action-btn.view {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .action-btn.edit {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .action-btn.download {
+        background: #28a745;
+        color: white;
+    }
+
+    .action-btn.delete {
+        background: #dc3545;
+        color: white;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+
+    .pagination-container {
+        background: white;
+        padding: 20px 30px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+    }
+
+    .pagination-info {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .pagination {
+        display: flex;
+        gap: 5px;
+    }
+
+    .page-link {
+        padding: 8px 12px;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        color: #667eea;
+        text-decoration: none;
+        transition: all 0.3s ease;
+    }
+
+    .page-link:hover {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    .page-link.active {
+        background: #667eea;
+        color: white;
+        border-color: #667eea;
+    }
+
+    @media (max-width: 768px) {
+        .field-reports-title {
+            font-size: 2rem;
+        }
+        
+        .filter-row {
+            grid-template-columns: 1fr;
+        }
+        
+        .quick-actions {
+            justify-content: center;
+        }
+        
+        .table-header {
+            flex-direction: column;
+            gap: 15px;
+            align-items: stretch;
+        }
+        
+        .pagination-container {
+            flex-direction: column;
+            gap: 15px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="field-reports-modern">
+    <!-- Field Reports Header -->
+    <div class="field-reports-header">
+        <h1 class="field-reports-title">Field Reports</h1>
+        <p class="field-reports-subtitle">Technician field reports, service completion tracking, and customer feedback</p>
+        
+        <div class="quick-actions">
+            <a href="#" class="quick-action-btn">
+                <i class="fas fa-plus"></i> Create Report
+            </a>
+            <a href="#" class="quick-action-btn">
+                <i class="fas fa-download"></i> Export Data
+            </a>
+            <a href="#" class="quick-action-btn">
+                <i class="fas fa-chart-bar"></i> Analytics
+            </a>
+            <a href="#" class="quick-action-btn">
+                <i class="fas fa-cog"></i> Settings
+            </a>
+        </div>
+    </div>
+
+    <!-- Field Reports Statistics -->
+    <div class="field-reports-stats">
+        <div class="stat-card total">
+            <h2 class="stat-number">{{ data.total_reports }}</h2>
+            <p class="stat-label">Total Reports</p>
+        </div>
+        <div class="stat-card completed">
+            <h2 class="stat-number">{{ data.completed_reports }}</h2>
+            <p class="stat-label">Completed</p>
+        </div>
+        <div class="stat-card pending">
+            <h2 class="stat-number">{{ data.pending_reports }}</h2>
+            <p class="stat-label">Pending</p>
+        </div>
+        <div class="stat-card satisfaction">
+            <h2 class="stat-number">{{ data.customer_satisfaction }}</h2>
+            <p class="stat-label">Avg Rating</p>
+        </div>
+    </div>
+
+    <!-- Filters -->
+    <div class="field-reports-filters">
+        <form method="GET" class="filter-row">
+            <div class="filter-group">
+                <label class="filter-label">Search</label>
+                <input type="text" name="search" class="filter-input" placeholder="Report number, technician, customer..." value="{{ request.args.get('search', '') }}">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Technician</label>
+                <select name="technician" class="filter-input">
+                    <option value="">All Technicians</option>
+                    <option value="ahmed_khan" {{ 'selected' if request.args.get('technician') == 'ahmed_khan' }}>Ahmed Khan</option>
+                    <option value="sara_ali" {{ 'selected' if request.args.get('technician') == 'sara_ali' }}>Sara Ali</option>
+                    <option value="mohammed_hassan" {{ 'selected' if request.args.get('technician') == 'mohammed_hassan' }}>Mohammed Hassan</option>
+                    <option value="fatima_ahmed" {{ 'selected' if request.args.get('technician') == 'fatima_ahmed' }}>Fatima Ahmed</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Customer</label>
+                <select name="customer" class="filter-input">
+                    <option value="">All Customers</option>
+                    {% for customer in customers %}
+                        <option value="{{ customer.id }}" {{ 'selected' if request.args.get('customer')|string == customer.id|string }}>{{ customer.name }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Service Type</label>
+                <select name="service_type" class="filter-input">
+                    <option value="">All Services</option>
+                    <option value="pest_control" {{ 'selected' if request.args.get('service_type') == 'pest_control' }}>Pest Control</option>
+                    <option value="fertilizer_application" {{ 'selected' if request.args.get('service_type') == 'fertilizer_application' }}>Fertilizer Application</option>
+                    <option value="crop_monitoring" {{ 'selected' if request.args.get('service_type') == 'crop_monitoring' }}>Crop Monitoring</option>
+                    <option value="irrigation_system" {{ 'selected' if request.args.get('service_type') == 'irrigation_system' }}>Irrigation System</option>
+                    <option value="soil_testing" {{ 'selected' if request.args.get('service_type') == 'soil_testing' }}>Soil Testing</option>
+                    <option value="equipment_maintenance" {{ 'selected' if request.args.get('service_type') == 'equipment_maintenance' }}>Equipment Maintenance</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">Status</label>
+                <select name="status" class="filter-input">
+                    <option value="">All Status</option>
+                    <option value="completed" {{ 'selected' if request.args.get('status') == 'completed' }}>Completed</option>
+                    <option value="in_progress" {{ 'selected' if request.args.get('status') == 'in_progress' }}>In Progress</option>
+                    <option value="pending_review" {{ 'selected' if request.args.get('status') == 'pending_review' }}>Pending Review</option>
+                    <option value="scheduled" {{ 'selected' if request.args.get('status') == 'scheduled' }}>Scheduled</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">From Date</label>
+                <input type="date" name="from_date" class="filter-input" value="{{ request.args.get('from_date', '') }}">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">To Date</label>
+                <input type="date" name="to_date" class="filter-input" value="{{ request.args.get('to_date', '') }}">
+            </div>
+            <div class="filter-group">
+                <label class="filter-label">&nbsp;</label>
+                <button type="submit" class="table-btn">Filter</button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Field Reports Table -->
+    <div class="field-reports-table">
+        <div class="table-header">
+            <h3 class="table-title">Field Reports</h3>
+            <div class="table-actions">
+                <button class="table-btn secondary">
+                    <i class="fas fa-filter"></i> Advanced Filter
+                </button>
+                <button class="table-btn">
+                    <i class="fas fa-download"></i> Export
+                </button>
+            </div>
+        </div>
+        
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Report #</th>
+                        <th>Technician</th>
+                        <th>Customer</th>
+                        <th>Service Type</th>
+                        <th>Date</th>
+                        <th>Status</th>
+                        <th>Completion Time</th>
+                        <th>Rating</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% if reports %}
+                        {% for report in reports %}
+                        <tr>
+                            <td>
+                                <span class="report-number">{{ report.report_number }}</span>
+                            </td>
+                            <td>
+                                <div class="technician-name">{{ report.technician }}</div>
+                                <small class="technician-email">{{ report.technician_email }}</small>
+                            </td>
+                            <td>
+                                <div class="customer-name">{{ report.customer }}</div>
+                                <small class="customer-email">{{ report.customer_email }}</small>
+                            </td>
+                            <td>
+                                <div class="service-type">{{ report.service_type }}</div>
+                            </td>
+                            <td>{{ report.date.strftime('%b %d, %Y') if report.date else 'N/A' }}</td>
+                            <td>
+                                <span class="status-badge status-{{ report.status.lower().replace(' ', '_') }}">
+                                    {{ report.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="completion-time">{{ report.completion_time }} hours</div>
+                            </td>
+                            <td>
+                                {% if report.customer_rating %}
+                                <div class="rating-stars">
+                                    {% for i in range(5) %}
+                                        {% if i < report.customer_rating %}
+                                            <i class="fas fa-star star"></i>
+                                        {% else %}
+                                            <i class="far fa-star star empty"></i>
+                                        {% endif %}
+                                    {% endfor %}
+                                </div>
+                                <small class="text-muted">{{ report.customer_rating }}/5</small>
+                                {% else %}
+                                <span class="text-muted">N/A</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <a href="#" class="action-btn view" onclick="viewReport({{ report.id }})">
+                                        <i class="fas fa-eye"></i> View
+                                    </a>
+                                    <a href="#" class="action-btn edit" onclick="editReport({{ report.id }})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </a>
+                                    <a href="#" class="action-btn download" onclick="downloadReport({{ report.id }})">
+                                        <i class="fas fa-download"></i> Download
+                                    </a>
+                                    <a href="#" class="action-btn delete" onclick="deleteReport({{ report.id }})">
+                                        <i class="fas fa-trash"></i> Delete
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    {% else %}
+                        <tr>
+                            <td colspan="9" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="fas fa-clipboard-list fa-3x mb-3"></i>
+                                    <p>No field reports found</p>
+                                    <a href="#" class="btn btn-primary">
+                                        <i class="fas fa-plus"></i> Create First Report
+                                    </a>
+                                </div>
+                            </td>
+                        </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if reports and reports|length > 10 %}
+    <div class="pagination-container">
+        <div class="pagination-info">
+            Showing 1 to {{ reports|length }} of {{ reports|length }} entries
+        </div>
+        <nav class="pagination">
+            <a href="#" class="page-link">Previous</a>
+            <a href="#" class="page-link active">1</a>
+            <a href="#" class="page-link">2</a>
+            <a href="#" class="page-link">3</a>
+            <a href="#" class="page-link">Next</a>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Field reports dashboard loaded successfully');
+    
+    // Add click tracking for analytics
+    const actionButtons = document.querySelectorAll('.action-btn');
+    actionButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const action = this.textContent.trim();
+            console.log('Field report action:', action);
+        });
+    });
+});
+
+function viewReport(reportId) {
+    // Open report detail modal or redirect
+    console.log('Viewing report:', reportId);
+    // Implement modal or redirect to detail page
+}
+
+function editReport(reportId) {
+    // Open edit modal or redirect
+    console.log('Editing report:', reportId);
+    // Implement edit functionality
+}
+
+function downloadReport(reportId) {
+    // Download report
+    console.log('Downloading report:', reportId);
+    // Implement download functionality
+}
+
+function deleteReport(reportId) {
+    if (confirm('Are you sure you want to delete this field report? This action cannot be undone.')) {
+        // Send delete request
+        fetch(`/services/field-reports/${reportId}/delete`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                location.reload();
+            } else {
+                alert('Error deleting report: ' + data.message);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting report');
+        });
+    }
+}
+
+// Auto-refresh reports
+setInterval(function() {
+    // Check for new reports
+    console.log('Checking for new field reports...');
+}, 300000); // Check every 5 minutes
+</script>
+{% endblock %} 

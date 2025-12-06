@@ -1,0 +1,293 @@
+{% extends "base.html" %}
+
+{% block title %}Inventory Reports - {{ data.business.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <div class="page-header-content">
+                    <h1 class="page-title">
+                        <i class="fas fa-boxes"></i>
+                        Inventory Reports
+                    </h1>
+                    <p class="page-subtitle">Stock analysis and management for {{ data.business.name }}</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-outline-primary" onclick="printReport()">
+                        <i class="fas fa-print"></i>
+                        Print
+                    </button>
+                    <button class="btn btn-primary" onclick="exportReport()">
+                        <i class="fas fa-download"></i>
+                        Export PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Products</h6>
+                            <h3 class="mb-0">{{ data.total_products }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-box fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-warning text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Low Stock Items</h6>
+                            <h3 class="mb-0">{{ data.low_stock_products }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Out of Stock</h6>
+                            <h3 class="mb-0">
+                                {{ data.products | selectattr('stock_status', 'equalto', 'Out of Stock') | list | length }}
+                            </h3>
+        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-times-circle fa-2x"></i>
+        </div>
+        </div>
+    </div>
+            </div>
+            </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">In Stock</h6>
+                            <h3 class="mb-0">
+                                {{ data.products | selectattr('stock_status', 'equalto', 'Normal') | list | length }}
+                            </h3>
+            </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+            </div>
+            </div>
+            </div>
+    </div>
+            </div>
+        </div>
+        
+    <!-- Inventory Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-list"></i>
+                        Product Inventory Status
+                    </h5>
+                </div>
+                <div class="card-body">
+        <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="inventoryTable">
+                            <thead class="table-dark">
+                    <tr>
+                                    <th>Product Name</th>
+                                    <th>SKU</th>
+                        <th>Current Stock</th>
+                                    <th>Min Stock Level</th>
+                                    <th>Unit Price</th>
+                                    <th>Stock Value</th>
+                        <th>Status</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                                {% for item in data.products %}
+                                <tr>
+                                    <td>{{ item.product.name }}</td>
+                                    <td><code>{{ item.product.sku or 'N/A' }}</code></td>
+                                    <td class="text-center">
+                                        <span class="badge bg-{% if item.product.stock_quantity > item.product.reorder_level %}success{% elif item.product.stock_quantity > 0 %}warning{% else %}danger{% endif %}">
+                                            {{ item.product.stock_quantity }} {{ item.product.unit or 'units' }}
+                                        </span>
+                            </td>
+                                    <td class="text-center">{{ item.product.reorder_level }} {{ item.product.unit or 'units' }}</td>
+                                    <td class="text-end">${{ "%.2f"|format(item.product.selling_price or 0) }}</td>
+                                    <td class="text-end">${{ "%.2f"|format(item.stock_value) }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if item.stock_status == 'Normal' %}success{% elif item.stock_status == 'Low Stock' %}warning{% else %}danger{% endif %}">
+                                            {{ item.stock_status }}
+                                </span>
+                            </td>
+                                    <td>
+                                        <button class="btn btn-sm btn-outline-primary" onclick="viewProduct({{ item.product.id }})">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button class="btn btn-sm btn-outline-warning" onclick="editProduct({{ item.product.id }})">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                </tbody>
+            </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Low Stock Alert -->
+    {% if data.low_stock_products > 0 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-warning">
+                <h5 class="alert-heading">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Low Stock Alert
+                </h5>
+                <p>You have {{ data.low_stock_products }} products with low stock levels. Consider reordering to avoid stockouts.</p>
+                <hr>
+                <div class="row">
+                    {% for item in data.products %}
+                        {% if item.stock_status == 'Low Stock' %}
+                        <div class="col-md-4 mb-2">
+                            <div class="card border-warning">
+                                <div class="card-body py-2">
+                                    <h6 class="card-title mb-1">{{ item.product.name }}</h6>
+                                    <p class="card-text small mb-0">
+                                        Current: {{ item.product.stock_quantity }} | 
+                                        Min: {{ item.product.reorder_level }}
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                        {% endif %}
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <!-- Stock Value Summary -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Stock Value Summary</h6>
+                </div>
+                <div class="card-body">
+                    {% set total_stock_value = data.products | sum(attribute='stock_value') %}
+                    <h4 class="text-primary">${{ "%.2f"|format(total_stock_value) }}</h4>
+                    <p class="text-muted">Total inventory value</p>
+                    
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between">
+                            <span>High Value Items:</span>
+                            <span class="text-success">
+                                {{ data.products | selectattr('stock_value', 'gt', total_stock_value / data.products|length * 2) | list | length }}
+                            </span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Low Value Items:</span>
+                            <span class="text-warning">
+                                {{ data.products | selectattr('stock_value', 'lt', total_stock_value / data.products|length * 0.5) | list | length }}
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Inventory Health</h6>
+                </div>
+                <div class="card-body">
+                    {% set healthy_products = data.products | selectattr('stock_status', 'equalto', 'Normal') | list | length %}
+                    {% set health_percentage = (healthy_products / data.products|length * 100) if data.products|length > 0 else 0 %}
+                    
+                    <div class="progress mb-3" style="height: 20px;">
+                        <div class="progress-bar bg-success" role="progressbar" style="width: {{ health_percentage }}%">
+                            {{ "%.1f"|format(health_percentage) }}%
+                        </div>
+                    </div>
+                    <p class="text-muted">Inventory health score</p>
+                    
+                    <div class="mt-3">
+                        <div class="d-flex justify-content-between">
+                            <span>Healthy Items:</span>
+                            <span class="text-success">{{ healthy_products }}</span>
+                        </div>
+                        <div class="d-flex justify-content-between">
+                            <span>Needs Attention:</span>
+                            <span class="text-warning">{{ data.products|length - healthy_products }}</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function printReport() {
+    window.print();
+}
+
+function exportReport() {
+    // In a real implementation, this would generate a PDF
+    alert('PDF export functionality would be implemented here');
+}
+
+function viewProduct(productId) {
+    // In a real implementation, this would open a product detail modal
+    alert('View product details for ID: ' + productId);
+}
+
+function editProduct(productId) {
+    // In a real implementation, this would open a product edit modal
+    alert('Edit product for ID: ' + productId);
+}
+
+// Initialize DataTable for better table functionality
+$(document).ready(function() {
+    $('#inventoryTable').DataTable({
+        "pageLength": 25,
+        "order": [[6, "asc"]], // Sort by status
+        "columnDefs": [
+            { "orderable": false, "targets": 7 } // Disable sorting on actions column
+        ]
+    });
+});
+
+// Auto-refresh data every 5 minutes
+setInterval(function() {
+    // In a real implementation, this would refresh the data
+    console.log('Refreshing inventory data...');
+}, 300000);
+</script>
+{% endblock %} 

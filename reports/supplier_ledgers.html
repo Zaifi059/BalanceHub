@@ -1,0 +1,516 @@
+{% extends "base.html" %}
+
+{% block title %}Supplier Ledgers - {{ session.current_business.name if session.get('current_business') else 'Business Accounts' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .supplier-ledgers-modern {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .supplier-ledgers-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .supplier-ledgers-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .supplier-ledgers-title {
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .supplier-ledgers-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin: 10px 0 0 0;
+    }
+
+    .search-filter-section {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+    }
+
+    .search-filter-container {
+        max-width: 100%;
+    }
+
+    .search-filter-form {
+        display: grid;
+        grid-template-columns: 2fr 1fr 1fr auto;
+        gap: 20px;
+        align-items: end;
+    }
+
+    .search-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .search-input-group {
+        position: relative;
+        display: flex;
+        align-items: center;
+    }
+
+    .search-input-group i {
+        position: absolute;
+        left: 15px;
+        color: #6c757d;
+        z-index: 2;
+    }
+
+    .search-input {
+        width: 100%;
+        padding: 12px 15px 12px 45px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        transition: all 0.3s ease;
+        background: #f8f9fa;
+    }
+
+    .search-input:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .filter-group {
+        display: flex;
+        flex-direction: column;
+    }
+
+    .filter-label {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #2c3e50;
+        margin-bottom: 8px;
+    }
+
+    .filter-select {
+        padding: 12px 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 0.95rem;
+        background: #f8f9fa;
+        transition: all 0.3s ease;
+        cursor: pointer;
+    }
+
+    .filter-select:focus {
+        outline: none;
+        border-color: #667eea;
+        background: white;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .filter-actions {
+        display: flex;
+        gap: 10px;
+        align-items: end;
+    }
+
+    .btn-filter {
+        background: #667eea;
+        color: white;
+        border: none;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .btn-filter:hover {
+        background: #5a6fd8;
+        transform: translateY(-1px);
+    }
+
+    .btn-clear {
+        background: #6c757d;
+        color: white;
+        text-decoration: none;
+        padding: 12px 20px;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        white-space: nowrap;
+    }
+
+    .btn-clear:hover {
+        background: #5a6268;
+        transform: translateY(-1px);
+        text-decoration: none;
+        color: white;
+    }
+
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .summary-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        text-align: center;
+        border-left: 4px solid var(--accent-color);
+    }
+
+    .summary-card.suppliers {
+        border-left-color: #17a2b8;
+    }
+
+    .summary-card.payables {
+        border-left-color: #dc3545;
+    }
+
+    .summary-card.credits {
+        border-left-color: #28a745;
+    }
+
+    .summary-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .summary-number.suppliers {
+        color: #17a2b8;
+    }
+
+    .summary-number.payables {
+        color: #dc3545;
+    }
+
+    .summary-number.credits {
+        color: #28a745;
+    }
+
+    .summary-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 5px;
+    }
+
+    .suppliers-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+        gap: 20px;
+    }
+
+    .supplier-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .supplier-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .supplier-name {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 10px;
+    }
+
+    .supplier-contact {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .supplier-balance {
+        font-size: 1.5rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+
+    .supplier-balance.positive {
+        color: #28a745;
+    }
+
+    .supplier-balance.negative {
+        color: #dc3545;
+    }
+
+    .supplier-balance.zero {
+        color: #6c757d;
+    }
+
+    .supplier-details {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 10px;
+        margin-top: 15px;
+    }
+
+    .supplier-detail {
+        text-align: center;
+    }
+
+    .supplier-detail-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 3px;
+    }
+
+    .supplier-detail-value {
+        font-size: 0.9rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-badge.active {
+        background: #e8f5e8;
+        color: #388e3c;
+    }
+
+    .status-badge.inactive {
+        background: #ffebee;
+        color: #d32f2f;
+    }
+
+    .no-suppliers {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+
+    .no-suppliers i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+        .supplier-ledgers-title {
+            font-size: 2rem;
+        }
+        
+        .search-filter-form {
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        
+        .filter-actions {
+            justify-content: stretch;
+        }
+        
+        .btn-filter,
+        .btn-clear {
+            flex: 1;
+            justify-content: center;
+        }
+        
+        .suppliers-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="supplier-ledgers-modern">
+    <!-- Supplier Ledgers Header -->
+    <div class="supplier-ledgers-header">
+        <h1 class="supplier-ledgers-title">Supplier Ledgers</h1>
+        <p class="supplier-ledgers-subtitle">Complete transaction history for all suppliers</p>
+    </div>
+
+    <!-- Search and Filter Section -->
+    <div class="search-filter-section">
+        <div class="search-filter-container">
+            <form method="GET" class="search-filter-form">
+                <div class="search-group">
+                    <div class="search-input-group">
+                        <i class="fas fa-search"></i>
+                        <input type="text" name="search" value="{{ data.search_query }}" placeholder="Search suppliers by name, email, phone, or contact person..." class="search-input">
+                    </div>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Balance Filter</label>
+                    <select name="balance_filter" class="filter-select">
+                        <option value="all" {% if data.balance_filter == 'all' %}selected{% endif %}>All Balances</option>
+                        <option value="outstanding" {% if data.balance_filter == 'outstanding' %}selected{% endif %}>Outstanding (Negative)</option>
+                        <option value="positive" {% if data.balance_filter == 'positive' %}selected{% endif %}>Positive Balance</option>
+                        <option value="negative" {% if data.balance_filter == 'negative' %}selected{% endif %}>Negative Balance</option>
+                        <option value="zero" {% if data.balance_filter == 'zero' %}selected{% endif %}>Zero Balance</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group">
+                    <label class="filter-label">Status Filter</label>
+                    <select name="status_filter" class="filter-select">
+                        <option value="all" {% if data.status_filter == 'all' %}selected{% endif %}>All Status</option>
+                        <option value="active" {% if data.status_filter == 'active' %}selected{% endif %}>Active Only</option>
+                        <option value="inactive" {% if data.status_filter == 'inactive' %}selected{% endif %}>Inactive Only</option>
+                    </select>
+                </div>
+                
+                <div class="filter-actions">
+                    <button type="submit" class="btn-filter">
+                        <i class="fas fa-filter"></i> Apply Filters
+                    </button>
+                    <a href="{{ url_for('reports.supplier_ledgers') }}" class="btn-clear">
+                        <i class="fas fa-times"></i> Clear
+                    </a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+        <div class="summary-card suppliers">
+            <h2 class="summary-number suppliers">{{ data.total_suppliers }}</h2>
+            <p class="summary-label">Total Suppliers</p>
+        </div>
+        <div class="summary-card payables">
+            <h2 class="summary-number payables">${{ "%.2f"|format(data.total_payables) }}</h2>
+            <p class="summary-label">Outstanding Payables</p>
+        </div>
+        <div class="summary-card credits">
+            <h2 class="summary-number credits">${{ "%.2f"|format(data.total_credits) }}</h2>
+            <p class="summary-label">Supplier Credits</p>
+        </div>
+    </div>
+
+    <!-- Suppliers Grid -->
+    {% if data.suppliers %}
+    <div class="suppliers-grid">
+        {% for supplier in data.suppliers %}
+        <a href="{{ url_for('reports.supplier_ledger', supplier_id=supplier.id) }}" class="supplier-card">
+            <h3 class="supplier-name">{{ supplier.name }}</h3>
+            
+            <div class="supplier-contact">
+                {% if supplier.contact_person %}
+                    <div><i class="fas fa-user"></i> {{ supplier.contact_person }}</div>
+                {% endif %}
+                {% if supplier.email %}
+                    <div><i class="fas fa-envelope"></i> {{ supplier.email }}</div>
+                {% endif %}
+                {% if supplier.phone %}
+                    <div><i class="fas fa-phone"></i> {{ supplier.phone }}</div>
+                {% endif %}
+            </div>
+            
+            <div class="supplier-balance {% if supplier.current_balance > 0 %}positive{% elif supplier.current_balance < 0 %}negative{% else %}zero{% endif %}">
+                ${{ "%.2f"|format(supplier.current_balance) }}
+            </div>
+            
+            <div class="supplier-details">
+                <div class="supplier-detail">
+                    <div class="supplier-detail-label">Payment Terms</div>
+                    <div class="supplier-detail-value">{{ supplier.payment_terms or 'N/A' }}</div>
+                </div>
+                <div class="supplier-detail">
+                    <div class="supplier-detail-label">Credit Period</div>
+                    <div class="supplier-detail-value">{{ supplier.credit_period }} days</div>
+                </div>
+            </div>
+            
+            <div class="text-center mt-3">
+                <span class="status-badge {% if supplier.is_active %}active{% else %}inactive{% endif %}">
+                    {% if supplier.is_active %}Active{% else %}Inactive{% endif %}
+                </span>
+            </div>
+        </a>
+        {% endfor %}
+    </div>
+    {% else %}
+    <div class="no-suppliers">
+        <i class="fas fa-truck"></i>
+        <h4>No Suppliers Found</h4>
+        <p>No active suppliers found in your system.</p>
+        <a href="{{ url_for('reports.index') }}" class="btn btn-primary">
+            <i class="fas fa-arrow-left"></i> Back to Reports
+        </a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Supplier ledgers page loaded successfully');
+    
+    // Add click tracking for analytics
+    const supplierCards = document.querySelectorAll('.supplier-card');
+    supplierCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const supplierName = this.querySelector('.supplier-name').textContent;
+            console.log('Supplier ledger accessed:', supplierName);
+        });
+    });
+});
+</script>
+{% endblock %}

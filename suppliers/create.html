@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Add Supplier - UR Accounts{% endblock %}
+{% block page_title %}Add Supplier{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-truck text-primary"></i> Add New Supplier
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Supplier Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="contact_person" class="form-label">Contact Person</label>
+                            <input type="text" class="form-control" id="contact_person" name="contact_person">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="area_id" class="form-label">Geographical Area</label>
+                            <select class="form-select" id="area_id" name="area_id">
+                                <option value="">Select Area (Optional)</option>
+                                {% for area in areas %}
+                                    <option value="{{ area.id }}" {% if request.args.get('area_id')|int == area.id %}selected{% endif %}>
+                                        {{ area.name }} ({{ area.code }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Choose the geographical area for this supplier</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="tax_id" class="form-label">Tax ID</label>
+                            <input type="text" class="form-control" id="tax_id" name="tax_id">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="city" class="form-label">City</label>
+                            <input type="text" class="form-control" id="city" name="city">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="province" class="form-label">Province</label>
+                            <input type="text" class="form-control" id="province" name="province">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="country" class="form-label">Country</label>
+                            <input type="text" class="form-control" id="country" name="country" value="Pakistan">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="postal_code" class="form-label">Postal Code</label>
+                            <input type="text" class="form-control" id="postal_code" name="postal_code">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="payment_terms" class="form-label">Payment Terms</label>
+                            <input type="text" class="form-control" id="payment_terms" name="payment_terms" placeholder="e.g., Net 30">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="address" class="form-label">Full Address</label>
+                        <textarea class="form-control" id="address" name="address" rows="3"></textarea>
+                    </div>
+
+                    <!-- Financial Information Section -->
+                    <div class="card mb-3">
+                        <div class="card-header">
+                            <h6 class="mb-0 text-primary">
+                                <i class="fas fa-money-bill-wave"></i> Financial Information
+                            </h6>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <div class="col-md-4 mb-3">
+                                    <label for="opening_balance" class="form-label">Opening Balance</label>
+                                    <input type="number" class="form-control" id="opening_balance" name="opening_balance" value="0" step="0.01" min="0">
+                                    <div class="form-text">Initial balance when supplier is added</div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="balance_type" class="form-label">Balance Type</label>
+                                    <select class="form-select" id="balance_type" name="balance_type">
+                                        <option value="debit">Debit (We owe supplier)</option>
+                                        <option value="credit">Credit (Supplier owes us)</option>
+                                        <option value="zero">Zero Balance</option>
+                                    </select>
+                                    <div class="form-text">Type of opening balance</div>
+                                </div>
+                                <div class="col-md-4 mb-3">
+                                    <label for="credit_limit" class="form-label">Credit Limit (PKR)</label>
+                                    <input type="number" class="form-control" id="credit_limit" name="credit_limit" value="0" step="0.01" min="0">
+                                    <div class="form-text">Maximum credit allowed from supplier</div>
+                                </div>
+                            </div>
+                            
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <label for="payment_period" class="form-label">Payment Period (Days)</label>
+                                    <input type="number" class="form-control" id="payment_period" name="payment_period" value="30" min="0" max="365">
+                                    <div class="form-text">Number of days to pay supplier</div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <label for="early_payment_discount" class="form-label">Early Payment Discount (%)</label>
+                                    <input type="number" class="form-control" id="early_payment_discount" name="early_payment_discount" value="0" step="0.01" min="0" max="100">
+                                    <div class="form-text">Discount for early payment</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" checked>
+                                <label class="form-check-label" for="is_active">
+                                    Active Supplier
+                                </label>
+                            </div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="preferred_supplier" name="preferred_supplier">
+                                <label class="form-check-label" for="preferred_supplier">
+                                    Preferred Supplier
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="notes" class="form-label">Notes</label>
+                        <textarea class="form-control" id="notes" name="notes" rows="2"></textarea>
+                    </div>
+                    
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('suppliers.index') }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Back to List
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Save Supplier
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Auto-fill area fields when area is selected
+document.getElementById('area_id').addEventListener('change', function() {
+    const selectedOption = this.options[this.selectedIndex];
+    if (selectedOption.value) {
+        this.classList.add('is-valid');
+    } else {
+        this.classList.remove('is-valid');
+    }
+});
+
+// Calculate and display opening balance preview
+document.getElementById('opening_balance').addEventListener('input', updateBalancePreview);
+document.getElementById('balance_type').addEventListener('change', updateBalancePreview);
+
+function updateBalancePreview() {
+    const openingBalance = parseFloat(document.getElementById('opening_balance').value) || 0;
+    const balanceType = document.getElementById('balance_type').value;
+    
+    let displayText = '';
+    if (openingBalance > 0) {
+        if (balanceType === 'debit') {
+            displayText = `We owe supplier: PKR ${openingBalance.toFixed(2)}`;
+        } else if (balanceType === 'credit') {
+            displayText = `Supplier owes us: PKR ${openingBalance.toFixed(2)}`;
+        } else {
+            displayText = `Zero balance`;
+        }
+    } else {
+        displayText = 'Zero balance';
+    }
+    
+    // You can add a display element here to show the preview
+    console.log(displayText);
+}
+
+// Set initial balance preview
+updateBalancePreview();
+</script>
+{% endblock %}

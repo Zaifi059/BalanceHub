@@ -1,0 +1,199 @@
+{% extends "base.html" %}
+
+{% block title %}Edit Supplier - UR Accounts{% endblock %}
+{% block page_title %}Edit Supplier{% endblock %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-10">
+        <div class="card">
+            <div class="card-header">
+                <h5 class="card-title mb-0">
+                    <i class="fas fa-edit text-primary"></i> Edit Supplier: {{ supplier.name }}
+                </h5>
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="name" class="form-label">Supplier Name *</label>
+                            <input type="text" class="form-control" id="name" name="name" value="{{ supplier.name }}" required>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="contact_person" class="form-label">Contact Person</label>
+                            <input type="text" class="form-control" id="contact_person" name="contact_person" value="{{ supplier.contact_person or '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="phone" class="form-label">Phone Number</label>
+                            <input type="tel" class="form-control" id="phone" name="phone" value="{{ supplier.phone or '' }}">
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="email" class="form-label">Email Address</label>
+                            <input type="email" class="form-control" id="email" name="email" value="{{ supplier.email or '' }}">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="area_id" class="form-label">Geographical Area</label>
+                            <select class="form-select" id="area_id" name="area_id">
+                                <option value="">Select Area (Optional)</option>
+                                {% for area in areas %}
+                                    <option value="{{ area.id }}" {% if supplier.area_id == area.id %}selected{% endif %}>
+                                        {{ area.name }} ({{ area.code }})
+                                    </option>
+                                {% endfor %}
+                            </select>
+                            <div class="form-text">Choose the geographical area for this supplier</div>
+                        </div>
+                        <div class="col-md-6 mb-3">
+                            <label for="tax_id" class="form-label">Tax ID / NTN</label>
+                            <input type="text" class="form-control" id="tax_id" name="tax_id" value="{{ supplier.tax_id or '' }}">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="address" class="form-label">Address</label>
+                            <textarea class="form-control" id="address" name="address" rows="2">{{ supplier.address or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="city" class="form-label">City</label>
+                            <input type="text" class="form-control" id="city" name="city" value="{{ supplier.city or '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="province" class="form-label">Province</label>
+                            <input type="text" class="form-control" id="province" name="province" value="{{ supplier.province or '' }}">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="postal_code" class="form-label">Postal Code</label>
+                            <input type="text" class="form-control" id="postal_code" name="postal_code" value="{{ supplier.postal_code or '' }}">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="country" class="form-label">Country</label>
+                            <input type="text" class="form-control" id="country" name="country" value="{{ supplier.country or 'Pakistan' }}">
+                        </div>
+                    </div>
+
+                    <hr class="my-4">
+                    <h6 class="text-primary mb-3">
+                        <i class="fas fa-calculator"></i> Financial Information
+                    </h6>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="opening_balance" class="form-label">Opening Balance</label>
+                            <input type="number" class="form-control" id="opening_balance" name="opening_balance" 
+                                   value="{{ supplier.opening_balance or 0 }}" step="0.01">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="balance_type" class="form-label">Balance Type</label>
+                            <select class="form-select" id="balance_type" name="balance_type">
+                                <option value="zero" {% if supplier.balance_type == 'zero' %}selected{% endif %}>Zero Balance</option>
+                                <option value="debit" {% if supplier.balance_type == 'debit' %}selected{% endif %}>We Owe (Debit)</option>
+                                <option value="credit" {% if supplier.balance_type == 'credit' %}selected{% endif %}>They Owe (Credit)</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="credit_limit" class="form-label">Credit Limit</label>
+                            <input type="number" class="form-control" id="credit_limit" name="credit_limit" 
+                                   value="{{ supplier.credit_limit or 0 }}" step="0.01">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-4 mb-3">
+                            <label for="payment_period" class="form-label">Payment Period (Days)</label>
+                            <input type="number" class="form-control" id="payment_period" name="payment_period" 
+                                   value="{{ supplier.payment_period or 30 }}" min="1">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="early_payment_discount" class="form-label">Early Payment Discount (%)</label>
+                            <input type="number" class="form-control" id="early_payment_discount" name="early_payment_discount" 
+                                   value="{{ supplier.early_payment_discount or 0 }}" step="0.01" min="0" max="100">
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="payment_terms" class="form-label">Payment Terms</label>
+                            <input type="text" class="form-control" id="payment_terms" name="payment_terms" 
+                                   value="{{ supplier.payment_terms or '' }}" placeholder="e.g., Net 30, COD">
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="is_active" name="is_active" 
+                                       {% if supplier.is_active %}checked{% endif %}>
+                                <label class="form-check-label" for="is_active">
+                                    Active Supplier
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <div class="form-check">
+                                <input class="form-check-input" type="checkbox" id="preferred_supplier" name="preferred_supplier" 
+                                       {% if supplier.preferred_supplier %}checked{% endif %}>
+                                <label class="form-check-label" for="preferred_supplier">
+                                    Preferred Supplier
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="notes" class="form-label">Notes</label>
+                            <textarea class="form-control" id="notes" name="notes" rows="3" 
+                                      placeholder="Additional notes about this supplier">{{ supplier.notes or '' }}</textarea>
+                        </div>
+                    </div>
+
+                    <div class="d-flex justify-content-between">
+                        <a href="{{ url_for('suppliers.show', id=supplier.id) }}" class="btn btn-secondary">
+                            <i class="fas fa-arrow-left"></i> Cancel
+                        </a>
+                        <button type="submit" class="btn btn-primary">
+                            <i class="fas fa-save"></i> Update Supplier
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Update current balance when opening balance or balance type changes
+    function updateCurrentBalance() {
+        const openingBalance = parseFloat(document.getElementById('opening_balance').value) || 0;
+        const balanceType = document.getElementById('balance_type').value;
+        
+        let currentBalance = 0;
+        if (balanceType === 'debit') {
+            currentBalance = openingBalance; // We owe supplier
+        } else if (balanceType === 'credit') {
+            currentBalance = -openingBalance; // Supplier owes us
+        }
+        
+        // You can display this somewhere if needed
+        console.log('Current balance would be:', currentBalance);
+    }
+    
+    document.getElementById('opening_balance').addEventListener('input', updateCurrentBalance);
+    document.getElementById('balance_type').addEventListener('change', updateCurrentBalance);
+});
+</script>
+{% endblock %}

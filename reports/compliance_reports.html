@@ -1,0 +1,421 @@
+{% extends "base.html" %}
+
+{% block title %}Compliance Reports - {{ data.business.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <div class="page-header-content">
+                    <h1 class="page-title">
+                        <i class="fas fa-shield-alt"></i>
+                        Compliance Reports
+                    </h1>
+                    <p class="page-subtitle">Regulatory compliance tracking and safety documentation for {{ data.business.name }}</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-outline-primary" onclick="printReport()">
+                        <i class="fas fa-print"></i>
+                        Print
+                    </button>
+                    <button class="btn btn-primary" onclick="exportReport()">
+                        <i class="fas fa-download"></i>
+                        Export PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Licenses</h6>
+                            <h3 class="mb-0">{{ data.total_licenses }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-certificate fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Active Licenses</h6>
+                            <h3 class="mb-0">{{ data.active_licenses }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-check-circle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Expired Licenses</h6>
+                            <h3 class="mb-0">{{ data.expired_licenses }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-exclamation-triangle fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">MSDS Documents</h6>
+                            <h3 class="mb-0">{{ data.msds_documents|length }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-file-alt fa-2x"></i>
+                        </div>
+        </div>
+        </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Compliance Status Overview -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-chart-pie"></i>
+                        Compliance Status Overview
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6 class="text-primary">License Status</h6>
+                            <div class="progress mb-2" style="height: 25px;">
+                                <div class="progress-bar bg-success" role="progressbar" 
+                                     style="width: {% if data.total_licenses > 0 %}{{ (data.active_licenses / data.total_licenses) * 100 }}{% else %}0{% endif %}%">
+                                    Active: {{ data.active_licenses }}
+                                </div>
+                            </div>
+                            <div class="progress mb-2" style="height: 25px;">
+                                <div class="progress-bar bg-danger" role="progressbar" 
+                                     style="width: {% if data.total_licenses > 0 %}{{ (data.expired_licenses / data.total_licenses) * 100 }}{% else %}0{% endif %}%">
+                                    Expired: {{ data.expired_licenses }}
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <h6 class="text-success">Compliance Score</h6>
+                            <div class="text-center">
+                                <h2 class="text-primary">
+                                    {% if data.total_licenses > 0 %}
+                                        {{ "%.0f"|format((data.active_licenses / data.total_licenses) * 100) }}
+                                    {% else %}
+                                        0
+                                    {% endif %}%
+                                </h2>
+                                <p class="text-muted">Overall Compliance</p>
+                                <div class="progress" style="height: 10px;">
+                                    <div class="progress-bar bg-primary" role="progressbar" 
+                                         style="width: {% if data.total_licenses > 0 %}{{ (data.active_licenses / data.total_licenses) * 100 }}{% else %}0{% endif %}%">
+                                    </div>
+                                </div>
+            </div>
+            </div>
+            </div>
+            </div>
+            </div>
+            </div>
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Quick Actions</h6>
+    </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <button class="btn btn-primary" onclick="addLicense()">
+                            <i class="fas fa-plus"></i> Add License
+                        </button>
+                        <button class="btn btn-warning" onclick="uploadMSDS()">
+                            <i class="fas fa-upload"></i> Upload MSDS
+                        </button>
+                        <button class="btn btn-info" onclick="generateReport()">
+                            <i class="fas fa-file-pdf"></i> Generate Report
+                </button>
+                        <button class="btn btn-success" onclick="scheduleAudit()">
+                            <i class="fas fa-calendar"></i> Schedule Audit
+                </button>
+                    </div>
+                </div>
+            </div>
+            </div>
+        </div>
+        
+    <!-- Licenses Table -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-certificate"></i>
+                        License Management
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if data.total_licenses > 0 %}
+        <div class="table-responsive">
+                            <table class="table table-striped table-hover" id="licenseTable">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>License Number</th>
+                                        <th>Type</th>
+                                        <th>Issued Date</th>
+                                        <th>Expiry Date</th>
+                        <th>Status</th>
+                                        <th>Issuing Authority</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                                    {% for license in data.licenses %}
+                                    <tr>
+                                        <td><code>{{ license.license_number or 'N/A' }}</code></td>
+                                        <td>{{ license.license_type or 'General' }}</td>
+                                        <td>{{ license.issued_date.strftime('%Y-%m-%d') if license.issued_date else 'N/A' }}</td>
+                                        <td>{{ license.expiry_date.strftime('%Y-%m-%d') if license.expiry_date else 'N/A' }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if license.status == 'active' %}success{% elif license.status == 'expired' %}danger{% else %}warning{% endif %}">
+                                                {{ license.status.title() }}
+                                </span>
+                            </td>
+                                        <td>{{ license.issuing_authority or 'N/A' }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="viewLicense({{ license.id }})">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-warning" onclick="editLicense({{ license.id }})">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                                    {% else %}
+                        <div class="text-center py-5">
+                            <i class="fas fa-certificate fa-3x text-muted mb-3"></i>
+                            <h5 class="text-muted">No Licenses Found</h5>
+                            <p class="text-muted">No license records available. Add your first license to get started.</p>
+                            <button class="btn btn-primary" onclick="addLicense()">
+                                <i class="fas fa-plus"></i> Add License
+                            </button>
+                        </div>
+                                    {% endif %}
+                                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chemical Usage & MSDS -->
+    <div class="row">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-flask"></i>
+                        Chemical Usage
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if data.chemical_usage %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Chemical</th>
+                                        <th>Quantity Used</th>
+                                        <th>Date</th>
+                                        <th>Safety Level</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for usage in data.chemical_usage %}
+                                    <tr>
+                                        <td>{{ usage.chemical_name or 'Unknown' }}</td>
+                                        <td>{{ usage.quantity_used or 'N/A' }}</td>
+                                        <td>{{ usage.usage_date.strftime('%Y-%m-%d') if usage.usage_date else 'N/A' }}</td>
+                                        <td>
+                                            <span class="badge bg-{% if usage.safety_level == 'high' %}danger{% elif usage.safety_level == 'medium' %}warning{% else %}success{% endif %}">
+                                                {{ usage.safety_level.title() if usage.safety_level else 'Low' }}
+                                            </span>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No chemical usage records available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-alt"></i>
+                        MSDS Documents
+                    </h5>
+                </div>
+                <div class="card-body">
+                    {% if data.msds_documents %}
+                        <div class="table-responsive">
+                            <table class="table table-sm">
+                                <thead>
+                                    <tr>
+                                        <th>Document Name</th>
+                                        <th>Chemical</th>
+                                        <th>Version</th>
+                                        <th>Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for doc in data.msds_documents %}
+                                    <tr>
+                                        <td>{{ doc.document_name or 'N/A' }}</td>
+                                        <td>{{ doc.chemical_name or 'N/A' }}</td>
+                                        <td>{{ doc.version or '1.0' }}</td>
+                                        <td>
+                                            <button class="btn btn-sm btn-outline-primary" onclick="viewDocument({{ doc.id }})">
+                                                <i class="fas fa-eye"></i>
+                                            </button>
+                                            <button class="btn btn-sm btn-outline-success" onclick="downloadDocument({{ doc.id }})">
+                                                <i class="fas fa-download"></i>
+                                            </button>
+                            </td>
+                        </tr>
+                                    {% endfor %}
+                </tbody>
+            </table>
+                        </div>
+                    {% else %}
+                        <p class="text-muted text-center">No MSDS documents available.</p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Compliance Alerts -->
+    {% if data.expired_licenses > 0 %}
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="alert alert-danger">
+                <h5 class="alert-heading">
+                    <i class="fas fa-exclamation-triangle"></i>
+                    Compliance Alert
+                </h5>
+                <p>You have {{ data.expired_licenses }} expired licenses that require immediate attention. Please renew them to maintain compliance.</p>
+                <hr>
+                <button class="btn btn-danger" onclick="renewLicenses()">
+                    <i class="fas fa-sync"></i>
+                    Renew Licenses
+                </button>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function printReport() {
+    window.print();
+}
+
+function exportReport() {
+    // In a real implementation, this would generate a PDF
+    alert('PDF export functionality would be implemented here');
+}
+
+function addLicense() {
+    // In a real implementation, this would open a license creation modal
+    alert('Add license functionality would be implemented here');
+}
+
+function uploadMSDS() {
+    // In a real implementation, this would open a file upload modal
+    alert('Upload MSDS functionality would be implemented here');
+}
+
+function generateReport() {
+    // In a real implementation, this would generate a compliance report
+    alert('Generate compliance report functionality would be implemented here');
+}
+
+function scheduleAudit() {
+    // In a real implementation, this would open an audit scheduling modal
+    alert('Schedule audit functionality would be implemented here');
+}
+
+function viewLicense(licenseId) {
+    // In a real implementation, this would open a license detail modal
+    alert('View license details for ID: ' + licenseId);
+}
+
+function editLicense(licenseId) {
+    // In a real implementation, this would open a license edit modal
+    alert('Edit license for ID: ' + licenseId);
+}
+
+function viewDocument(docId) {
+    // In a real implementation, this would open a document viewer
+    alert('View document for ID: ' + docId);
+}
+
+function downloadDocument(docId) {
+    // In a real implementation, this would download the document
+    alert('Download document for ID: ' + docId);
+}
+
+function renewLicenses() {
+    // In a real implementation, this would open a license renewal process
+    alert('License renewal functionality would be implemented here');
+}
+
+// Initialize DataTable for better table functionality
+$(document).ready(function() {
+    $('#licenseTable').DataTable({
+        "pageLength": 25,
+        "order": [[3, "asc"]], // Sort by expiry date
+        "columnDefs": [
+            { "orderable": false, "targets": 6 } // Disable sorting on actions column
+        ]
+    });
+});
+
+// Auto-refresh data every 5 minutes
+setInterval(function() {
+    // In a real implementation, this would refresh the data
+    console.log('Refreshing compliance data...');
+}, 300000);
+</script>
+{% endblock %} 

@@ -1,0 +1,19 @@
+LOGO FILE INSTRUCTIONS
+======================
+
+To add your company logo to the invoice:
+
+1. Place your logo file as "logo.png" in this directory (app/static/)
+2. The logo should be:
+   - PNG format
+   - Recommended size: 200x100 pixels or similar
+   - Transparent background preferred
+   - High quality for print
+
+3. The logo will appear on the left side of the invoice header
+4. It will automatically scale for both screen and print display
+
+Current path: app/static/logo.png
+Status: Placeholder file created - replace with your actual logo
+
+IMPORTANT: The logo.png file must exist for the logo to display on invoices!

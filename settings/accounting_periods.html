@@ -1,0 +1,942 @@
+{% extends "base.html" %}
+
+{% block title %}Accounting Periods - {{ session.current_business.name if session.get('current_business') else 'Business Accounts' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .accounting-periods-modern {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .accounting-periods-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .accounting-periods-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .accounting-periods-title {
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .accounting-periods-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin: 10px 0 0 0;
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .quick-action-btn {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .quick-action-btn:hover {
+        background: rgba(255,255,255,0.3);
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+
+    .periods-overview-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        text-align: center;
+        border-left: 4px solid var(--accent-color);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .stat-card.periods { --accent-color: #17a2b8; }
+    .stat-card.active { --accent-color: #28a745; }
+    .stat-card.closed { --accent-color: #dc3545; }
+    .stat-card.future { --accent-color: #ffc107; }
+    .stat-card.revenue { --accent-color: #fd7e14; }
+    .stat-card.expenses { --accent-color: #e83e8c; }
+    .stat-card.profit { --accent-color: #20c997; }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 5px;
+    }
+
+    .periods-content {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .periods-section {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .section-header {
+        background: #f8f9fa;
+        padding: 25px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-subtitle {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 5px 0 0 0;
+    }
+
+    .periods-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .periods-table th {
+        background: #f8f9fa;
+        padding: 15px;
+        text-align: left;
+        font-weight: 700;
+        color: #2c3e50;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .periods-table td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: top;
+    }
+
+    .periods-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .period-name {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .period-year {
+        font-size: 0.8rem;
+        color: #6c757d;
+        background: #e9ecef;
+        padding: 2px 8px;
+        border-radius: 12px;
+        display: inline-block;
+    }
+
+    .period-dates {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-badge.active {
+        background: #e8f5e8;
+        color: #388e3c;
+    }
+
+    .status-badge.closed {
+        background: #ffebee;
+        color: #d32f2f;
+    }
+
+    .status-badge.future {
+        background: #fff3e0;
+        color: #f57c00;
+    }
+
+    .financial-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+        gap: 10px;
+        margin-top: 10px;
+    }
+
+    .metric-item {
+        text-align: center;
+        padding: 8px;
+        background: #f8f9fa;
+        border-radius: 8px;
+    }
+
+    .metric-value {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 2px;
+    }
+
+    .metric-label {
+        font-size: 0.7rem;
+        color: #6c757d;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .transaction-counts {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .transaction-counts strong {
+        color: #2c3e50;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 8px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 4px;
+        text-decoration: none;
+    }
+
+    .action-btn.primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .action-btn.secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .action-btn.success {
+        background: #28a745;
+        color: white;
+    }
+
+    .action-btn.warning {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .action-btn.danger {
+        background: #dc3545;
+        color: white;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+
+    .current-period-highlight {
+        background: linear-gradient(135deg, #e8f5e8 0%, #f0f8f0 100%);
+        border-left: 4px solid #28a745;
+    }
+
+    .closed-period-highlight {
+        background: linear-gradient(135deg, #ffebee 0%, #fff5f5 100%);
+        border-left: 4px solid #dc3545;
+    }
+
+    .future-period-highlight {
+        background: linear-gradient(135deg, #fff3e0 0%, #fff8f0 100%);
+        border-left: 4px solid #ffc107;
+    }
+
+    @media (max-width: 768px) {
+        .accounting-periods-title {
+            font-size: 2rem;
+        }
+        
+        .quick-actions {
+            justify-content: center;
+        }
+        
+        .periods-table {
+            font-size: 0.9rem;
+        }
+        
+        .periods-table th,
+        .periods-table td {
+            padding: 10px 8px;
+        }
+        
+        .action-buttons {
+            justify-content: center;
+        }
+        
+        .financial-metrics {
+            grid-template-columns: repeat(2, 1fr);
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="accounting-periods-modern">
+    <!-- Accounting Periods Header -->
+    <div class="accounting-periods-header">
+        <h1 class="accounting-periods-title">Accounting Periods</h1>
+        <p class="accounting-periods-subtitle">Manage financial years and accounting periods for your business</p>
+        
+        <div class="quick-actions">
+            <a href="#" class="quick-action-btn" onclick="addPeriod()">
+                <i class="fas fa-plus"></i> Add New Period
+            </a>
+            <a href="#" class="quick-action-btn" onclick="exportPeriodsData()">
+                <i class="fas fa-download"></i> Export Data
+            </a>
+            <a href="#" class="quick-action-btn" onclick="printPeriods()">
+                <i class="fas fa-print"></i> Print Periods
+            </a>
+            <a href="#" class="quick-action-btn" onclick="viewPeriodSummary()">
+                <i class="fas fa-chart-bar"></i> Period Summary
+            </a>
+        </div>
+    </div>
+
+    <!-- Periods Overview Statistics -->
+    <div class="periods-overview-stats">
+        <div class="stat-card periods">
+            <h2 class="stat-number">{{ data.total_periods }}</h2>
+            <p class="stat-label">Total Periods</p>
+        </div>
+        <div class="stat-card active">
+            <h2 class="stat-number">{{ data.active_periods }}</h2>
+            <p class="stat-label">Active Periods</p>
+        </div>
+        <div class="stat-card closed">
+            <h2 class="stat-number">{{ data.closed_periods }}</h2>
+            <p class="stat-label">Closed Periods</p>
+        </div>
+        <div class="stat-card future">
+            <h2 class="stat-number">{{ data.future_periods }}</h2>
+            <p class="stat-label">Future Periods</p>
+        </div>
+        <div class="stat-card revenue">
+            <h2 class="stat-number">${{ "%.0f"|format(data.total_revenue_all/1000) }}K</h2>
+            <p class="stat-label">Total Revenue</p>
+    </div>
+        <div class="stat-card expenses">
+            <h2 class="stat-number">${{ "%.0f"|format(data.total_expenses_all/1000) }}K</h2>
+            <p class="stat-label">Total Expenses</p>
+            </div>
+        <div class="stat-card profit">
+            <h2 class="stat-number">${{ "%.0f"|format(data.total_profit_all/1000) }}K</h2>
+            <p class="stat-label">Total Profit</p>
+            </div>
+    </div>
+
+    <!-- Accounting Periods Content -->
+    <div class="periods-content">
+        <!-- Periods Section -->
+        <div class="periods-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-calendar-alt"></i>
+                    Financial Years & Periods
+                </h2>
+                <p class="section-subtitle">Manage and monitor all accounting periods with detailed financial metrics</p>
+        </div>
+        
+            <div style="overflow-x: auto;">
+                <table class="periods-table">
+                <thead>
+                    <tr>
+                        <th>Period</th>
+                            <th>Year</th>
+                            <th>Status</th>
+                        <th>Duration</th>
+                        <th>Transactions</th>
+                            <th>Financial Metrics</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                        {% for period in periods %}
+                        <tr class="{% if period.is_current %}current-period-highlight{% elif period.status == 'Closed' %}closed-period-highlight{% elif period.status == 'Future' %}future-period-highlight{% endif %}">
+                            <td>
+                                <div class="period-name">{{ period.period_name }}</div>
+                                <div class="period-year">{{ period.year }}</div>
+                            </td>
+                            <td>
+                                <div class="period-dates">
+                                    <strong>{{ period.year }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-badge {% if period.status == 'Active' %}active{% elif period.status == 'Closed' %}closed{% else %}future{% endif %}">
+                                    {{ period.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="period-dates">
+                                    <strong>{{ period.start_date.strftime('%b %d, %Y') }}</strong><br>
+                                    <small>to {{ period.end_date.strftime('%b %d, %Y') }}</small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="transaction-counts">
+                                    <strong>{{ period.transactions_count }}</strong> total<br>
+                                    <small>
+                                        {{ period.invoices_count }} invoices, 
+                                        {{ period.purchases_count }} purchases, 
+                                        {{ period.expenses_count }} expenses
+                                    </small>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="financial-metrics">
+                                    <div class="metric-item">
+                                        <div class="metric-value">${{ "%.0f"|format(period.total_revenue/1000) }}K</div>
+                                        <div class="metric-label">Revenue</div>
+                                    </div>
+                                    <div class="metric-item">
+                                        <div class="metric-value">${{ "%.0f"|format(period.total_expenses/1000) }}K</div>
+                                        <div class="metric-label">Expenses</div>
+                                    </div>
+                                    <div class="metric-item">
+                                        <div class="metric-value">${{ "%.0f"|format(period.total_purchases/1000) }}K</div>
+                                        <div class="metric-label">Purchases</div>
+                                    </div>
+                                    <div class="metric-item">
+                                        <div class="metric-value {% if period.net_profit >= 0 %}text-success{% else %}text-danger{% endif %}">${{ "%.0f"|format(period.net_profit/1000) }}K</div>
+                                        <div class="metric-label">Net Profit</div>
+                                    </div>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn primary" onclick="viewPeriodDetails({{ period.year }})">
+                                        <i class="fas fa-eye"></i> View
+                                    </button>
+                                    <button class="action-btn secondary" onclick="editPeriod({{ period.year }})">
+                                        <i class="fas fa-edit"></i> Edit
+                                    </button>
+                                    {% if period.status == 'Active' %}
+                                    <button class="action-btn warning" onclick="closePeriod({{ period.year }})">
+                                            <i class="fas fa-lock"></i> Close
+                                    </button>
+                                    {% elif period.status == 'Closed' %}
+                                    <button class="action-btn success" onclick="reopenPeriod({{ period.year }})">
+                                            <i class="fas fa-unlock"></i> Reopen
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Add Period Modal -->
+<div class="modal fade" id="addPeriodModal" tabindex="-1" aria-labelledby="addPeriodModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addPeriodModalLabel">Add New Accounting Period</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="addPeriodForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="periodYear" class="form-label">Year *</label>
+                                <input type="number" class="form-control" id="periodYear" name="year" min="2020" max="2030" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="periodName" class="form-label">Period Name</label>
+                                <input type="text" class="form-control" id="periodName" name="period_name" readonly>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="startDate" class="form-label">Start Date *</label>
+                                <input type="date" class="form-control" id="startDate" name="start_date" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="endDate" class="form-label">End Date *</label>
+                                <input type="date" class="form-control" id="endDate" name="end_date" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="periodDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="periodDescription" name="description" rows="3" placeholder="Optional description for this accounting period"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="savePeriod()">Create Period</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Period Details Modal -->
+<div class="modal fade" id="viewPeriodModal" tabindex="-1" aria-labelledby="viewPeriodModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewPeriodModalLabel">Period Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewPeriodContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="editCurrentPeriod()">Edit Period</button>
+            </div>
+        </div>
+        </div>
+    </div>
+
+<!-- Period Summary Modal -->
+<div class="modal fade" id="periodSummaryModal" tabindex="-1" aria-labelledby="periodSummaryModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="periodSummaryModalLabel">Accounting Periods Summary</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="periodSummaryContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" onclick="exportPeriodsData()">Export Summary</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentPeriodYear = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Accounting periods page loaded successfully');
+    
+    // Auto-update period name when year changes
+    document.getElementById('periodYear').addEventListener('input', function() {
+        const year = this.value;
+        if (year) {
+            document.getElementById('periodName').value = `FY ${year}`;
+            document.getElementById('startDate').value = `${year}-01-01`;
+            document.getElementById('endDate').value = `${year}-12-31`;
+        }
+    });
+    
+    // Add click tracking for analytics
+    const actionButtons = document.querySelectorAll('.action-btn');
+    actionButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const action = this.textContent.trim();
+            console.log('Accounting periods action:', action);
+        });
+    });
+});
+
+// Add Period Functions
+function addPeriod() {
+    console.log('Opening add period modal');
+    const modal = new bootstrap.Modal(document.getElementById('addPeriodModal'));
+    modal.show();
+}
+
+function savePeriod() {
+    const form = document.getElementById('addPeriodForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    console.log('Saving period:', data);
+    
+    fetch('/settings/api/accounting-periods', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert('Accounting period created successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('addPeriodModal')).hide();
+            form.reset();
+            // Refresh the page to show new period
+            location.reload();
+        } else {
+            alert('Error creating period: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating period');
+    });
+}
+
+// View Period Details Functions
+function viewPeriodDetails(year) {
+    console.log('Opening view period details modal for year:', year);
+    currentPeriodYear = year;
+    
+    // Fetch period details
+    fetch(`/settings/api/accounting-periods/${year}`)
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            const period = result.period;
+            
+            // Create detailed view content
+            const content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Period Information</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Period Name:</strong></td><td>${period.period_name}</td></tr>
+                            <tr><td><strong>Year:</strong></td><td>${period.year}</td></tr>
+                            <tr><td><strong>Start Date:</strong></td><td>${new Date(period.start_date).toLocaleDateString()}</td></tr>
+                            <tr><td><strong>End Date:</strong></td><td>${new Date(period.end_date).toLocaleDateString()}</td></tr>
+                            <tr><td><strong>Status:</strong></td><td><span class="badge ${period.status === 'Active' ? 'bg-success' : period.status === 'Closed' ? 'bg-danger' : 'bg-warning'}">${period.status}</span></td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Transaction Counts</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Total Transactions:</strong></td><td>${period.transactions_count}</td></tr>
+                            <tr><td><strong>Invoices:</strong></td><td>${period.invoices_count}</td></tr>
+                            <tr><td><strong>Purchases:</strong></td><td>${period.purchases_count}</td></tr>
+                            <tr><td><strong>Expenses:</strong></td><td>${period.expenses_count}</td></tr>
+                            <tr><td><strong>Journal Entries:</strong></td><td>${period.journal_entries_count}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-4">
+                    <div class="col-12">
+                        <h6>Financial Summary</h6>
+                        <div class="row">
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-success">$${(period.total_revenue / 1000).toFixed(0)}K</h5>
+                                        <p class="card-text">Total Revenue</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-danger">$${(period.total_expenses / 1000).toFixed(0)}K</h5>
+                                        <p class="card-text">Total Expenses</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title text-warning">$${(period.total_purchases / 1000).toFixed(0)}K</h5>
+                                        <p class="card-text">Total Purchases</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="col-md-3">
+                                <div class="card text-center">
+                                    <div class="card-body">
+                                        <h5 class="card-title ${period.net_profit >= 0 ? 'text-success' : 'text-danger'}">$${(period.net_profit / 1000).toFixed(0)}K</h5>
+                                        <p class="card-text">Net Profit</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('viewPeriodContent').innerHTML = content;
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('viewPeriodModal'));
+            modal.show();
+        } else {
+            alert('Error fetching period details: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error fetching period details');
+    });
+}
+
+function editCurrentPeriod() {
+    bootstrap.Modal.getInstance(document.getElementById('viewPeriodModal')).hide();
+    editPeriod(currentPeriodYear);
+}
+
+// Edit Period Functions
+function editPeriod(year) {
+    console.log('Editing period for year:', year);
+    // Implement edit period functionality
+    alert('Edit period functionality will be implemented for year: ' + year);
+}
+
+// Period Management Functions
+function closePeriod(year) {
+    if (confirm(`Are you sure you want to close FY ${year}? This will prevent further transactions in this period.`)) {
+        console.log('Closing period:', year);
+        
+        fetch(`/settings/api/accounting-periods/${year}/close`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert(`FY ${year} closed successfully!`);
+                location.reload();
+            } else {
+                alert('Error closing period: ' + result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error closing period');
+        });
+    }
+}
+
+function reopenPeriod(year) {
+    if (confirm(`Are you sure you want to reopen FY ${year}? This will allow transactions in this period again.`)) {
+        console.log('Reopening period:', year);
+        
+        fetch(`/settings/api/accounting-periods/${year}/reopen`, {
+            method: 'POST'
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert(`FY ${year} reopened successfully!`);
+                location.reload();
+            } else {
+                alert('Error reopening period: ' + result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error reopening period');
+        });
+    }
+}
+
+// Export Functions
+function exportPeriodsData() {
+    console.log('Exporting periods data');
+    window.open('/settings/api/export-periods-data', '_blank');
+}
+
+function printPeriods() {
+    console.log('Printing periods');
+    window.print();
+}
+
+// Summary Functions
+function viewPeriodSummary() {
+    console.log('Opening period summary modal');
+    
+    // Create summary content
+    const content = `
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Period Overview</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 class="text-primary">{{ data.total_periods }}</h4>
+                                <small>Total Periods</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-success">{{ data.active_periods }}</h4>
+                                <small>Active Periods</small>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 class="text-danger">{{ data.closed_periods }}</h4>
+                                <small>Closed Periods</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-warning">{{ data.future_periods }}</h4>
+                                <small>Future Periods</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Financial Overview</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 class="text-success">${{ "%.0f"|format(data.total_revenue_all/1000) }}K</h4>
+                                <small>Total Revenue</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-danger">${{ "%.0f"|format(data.total_expenses_all/1000) }}K</h4>
+                                <small>Total Expenses</small>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row text-center">
+                            <div class="col-12">
+                                <h4 class="text-info">${{ "%.0f"|format(data.total_profit_all/1000) }}K</h4>
+                                <small>Total Profit</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Current Status</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Current Period
+                                <span class="badge bg-primary">{{ data.current_period }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Next Period
+                                <span class="badge bg-secondary">{{ data.next_period }}</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Last Updated
+                                <span class="badge bg-info">{{ data.generated_at }}</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('periodSummaryContent').innerHTML = content;
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('periodSummaryModal'));
+    modal.show();
+}
+</script>
+{% endblock %} 

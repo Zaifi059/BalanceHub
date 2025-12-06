@@ -1,0 +1,262 @@
+{% extends "base.html" %}
+
+{% block title %}Profit & Loss Statement - {{ data.business.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <div class="page-header-content">
+                    <h1 class="page-title">
+                        <i class="fas fa-chart-line"></i>
+                        Profit & Loss Statement
+                    </h1>
+                    <p class="page-subtitle">Financial performance overview for {{ data.business.name }}</p>
+                </div>
+                <div class="page-actions">
+                    <button class="btn btn-outline-primary" onclick="printReport()">
+                        <i class="fas fa-print"></i>
+                        Print
+                    </button>
+                    <button class="btn btn-primary" onclick="exportReport()">
+                        <i class="fas fa-download"></i>
+                        Export PDF
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Date Range Filter -->
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-body">
+                    <form method="GET" class="row g-3">
+                        <div class="col-md-4">
+                            <label for="start_date" class="form-label">Start Date</label>
+                            <input type="date" class="form-control" id="start_date" name="start_date" value="{{ data.start_date }}">
+            </div>
+                        <div class="col-md-4">
+                            <label for="end_date" class="form-label">End Date</label>
+                            <input type="date" class="form-control" id="end_date" name="end_date" value="{{ data.end_date }}">
+            </div>
+                        <div class="col-md-4 d-flex align-items-end">
+                            <button type="submit" class="btn btn-primary">
+                                <i class="fas fa-filter"></i>
+                                Apply Filter
+                            </button>
+            </div>
+        </form>
+    </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Revenue</h6>
+                            <h3 class="mb-0">${{ "%.2f"|format(data.total_revenue) }}</h3>
+        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-arrow-up fa-2x"></i>
+            </div>
+            </div>
+            </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card bg-danger text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Expenses</h6>
+                            <h3 class="mb-0">${{ "%.2f"|format(data.total_expenses) }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-arrow-down fa-2x"></i>
+            </div>
+            </div>
+            </div>
+            </div>
+        </div>
+        <div class="col-md-3">
+            <div class="card {% if data.net_profit >= 0 %}bg-success{% else %}bg-danger{% endif %} text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Net Profit/Loss</h6>
+                            <h3 class="mb-0">${{ "%.2f"|format(data.net_profit) }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-{% if data.net_profit >= 0 %}chart-line{% else %}exclamation-triangle{% endif %} fa-2x"></i>
+                        </div>
+            </div>
+        </div>
+            </div>
+            </div>
+        <div class="col-md-3">
+            <div class="card bg-info text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Profit Margin</h6>
+                            <h3 class="mb-0">
+                                {% if data.total_revenue > 0 %}
+                                    {{ "%.1f"|format((data.net_profit / data.total_revenue) * 100) }}%
+                                {% else %}
+                                    0%
+                                {% endif %}
+                            </h3>
+            </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-percentage fa-2x"></i>
+            </div>
+            </div>
+            </div>
+            </div>
+            </div>
+        </div>
+
+    <!-- Profit & Loss Statement -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-file-invoice-dollar"></i>
+                        Profit & Loss Statement
+                    </h5>
+                    <p class="card-subtitle text-muted mb-0">
+                        Period: {{ data.start_date }} to {{ data.end_date }}
+                    </p>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped">
+                            <thead>
+                                <tr>
+                                    <th>Description</th>
+                                    <th class="text-end">Amount</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Revenue Section -->
+                                <tr class="table-success">
+                                    <td><strong>REVENUE</strong></td>
+                                    <td class="text-end"><strong>${{ "%.2f"|format(data.total_revenue) }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-4">Sales Revenue</td>
+                                    <td class="text-end">${{ "%.2f"|format(data.total_revenue) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-4">Total Invoices: {{ data.revenue_count }}</td>
+                                    <td class="text-end">-</td>
+                                </tr>
+                                
+                                <!-- Expenses Section -->
+                                <tr class="table-danger">
+                                    <td><strong>EXPENSES</strong></td>
+                                    <td class="text-end"><strong>${{ "%.2f"|format(data.total_expenses) }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-4">Operating Expenses</td>
+                                    <td class="text-end">${{ "%.2f"|format(data.total_expenses) }}</td>
+                                </tr>
+                                <tr>
+                                    <td class="ps-4">Total Expenses: {{ data.expense_count }}</td>
+                                    <td class="text-end">-</td>
+                                </tr>
+                                
+                                <!-- Net Income Section -->
+                                <tr class="{% if data.net_profit >= 0 %}table-success{% else %}table-danger{% endif %}">
+                                    <td><strong>NET PROFIT/LOSS</strong></td>
+                                    <td class="text-end"><strong>${{ "%.2f"|format(data.net_profit) }}</strong></td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Additional Information -->
+    <div class="row mt-4">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Key Metrics</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-6">
+                            <p><strong>Revenue per Invoice:</strong></p>
+                            <p class="text-muted">
+                                {% if data.revenue_count > 0 %}
+                                    ${{ "%.2f"|format(data.total_revenue / data.revenue_count) }}
+                                {% else %}
+                                    $0.00
+                                {% endif %}
+                            </p>
+                        </div>
+                        <div class="col-6">
+                            <p><strong>Expense per Transaction:</strong></p>
+                            <p class="text-muted">
+                                {% if data.expense_count > 0 %}
+                                    ${{ "%.2f"|format(data.total_expenses / data.expense_count) }}
+                                {% else %}
+                                    $0.00
+                                {% endif %}
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Report Information</h6>
+                </div>
+                <div class="card-body">
+                    <p><strong>Business:</strong> {{ data.business.name }}</p>
+                    <p><strong>Report Period:</strong> {{ data.start_date }} to {{ data.end_date }}</p>
+                    <p><strong>Generated:</strong> {{ data.generated_at }}</p>
+                    <p><strong>Status:</strong> 
+                        <span class="badge {% if data.net_profit >= 0 %}bg-success{% else %}bg-danger{% endif %}">
+                            {% if data.net_profit >= 0 %}Profitable{% else %}Loss{% endif %}
+                        </span>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function printReport() {
+    window.print();
+}
+
+function exportReport() {
+    // In a real implementation, this would generate a PDF
+    alert('PDF export functionality would be implemented here');
+}
+
+// Auto-refresh data every 5 minutes
+setInterval(function() {
+    // In a real implementation, this would refresh the data
+    console.log('Refreshing P&L data...');
+}, 300000);
+</script>
+{% endblock %} 

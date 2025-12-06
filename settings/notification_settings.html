@@ -1,0 +1,1239 @@
+{% extends "base.html" %}
+
+{% block title %}Notification Settings - {{ data.business.name if data.business else 'Business Accounts' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .notification-settings-modern {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .notification-settings-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .notification-settings-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .notification-settings-title {
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .notification-settings-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin: 10px 0 0 0;
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .quick-action-btn {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .quick-action-btn:hover {
+        background: rgba(255,255,255,0.3);
+        color: white;
+        text-decoration: none;
+        transform: translateY(-2px);
+    }
+
+    .notification-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 30px;
+        border-radius: 15px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        text-align: center;
+        transition: transform 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+    }
+
+    .stat-card.total { border-left: 5px solid #667eea; }
+    .stat-card.email { border-left: 5px solid #dc3545; }
+    .stat-card.sms { border-left: 5px solid #28a745; }
+    .stat-card.whatsapp { border-left: 5px solid #25d366; }
+    .stat-card.push { border-left: 5px solid #ffc107; }
+    .stat-card.success { border-left: 5px solid #17a2b8; }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0;
+        color: #333;
+    }
+
+    .stat-label {
+        font-size: 1rem;
+        color: #666;
+        margin: 10px 0 0 0;
+        font-weight: 500;
+    }
+
+    .notification-tabs {
+        display: flex;
+        background: white;
+        border-radius: 15px;
+        padding: 5px;
+        margin-bottom: 30px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .notification-tab {
+        flex: 1;
+        padding: 15px 20px;
+        text-align: center;
+        border-radius: 10px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        font-weight: 600;
+        color: #666;
+    }
+
+    .notification-tab.active {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .notification-tab:hover:not(.active) {
+        background: #f8f9fa;
+        color: #333;
+    }
+
+    .notification-content {
+        display: none;
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+
+    .notification-content.active {
+        display: block;
+    }
+
+    .settings-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(400px, 1fr));
+        gap: 20px;
+    }
+
+    .setting-card {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 20px;
+        border-left: 4px solid #667eea;
+        transition: all 0.3s ease;
+    }
+
+    .setting-card:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .setting-card.disabled {
+        opacity: 0.6;
+        border-left-color: #6c757d;
+    }
+
+    .setting-header {
+        display: flex;
+        justify-content: between;
+        align-items: start;
+        margin-bottom: 15px;
+    }
+
+    .setting-title {
+        font-size: 1.2rem;
+        font-weight: 600;
+        color: #333;
+        margin: 0;
+    }
+
+    .setting-category {
+        font-size: 0.8rem;
+        color: #667eea;
+        text-transform: uppercase;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .setting-description {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 15px;
+    }
+
+    .setting-meta {
+        display: flex;
+        gap: 15px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .meta-item {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        font-size: 0.8rem;
+        color: #666;
+    }
+
+    .meta-item i {
+        color: #667eea;
+    }
+
+    .setting-channels {
+        display: flex;
+        gap: 5px;
+        margin-bottom: 15px;
+        flex-wrap: wrap;
+    }
+
+    .channel-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .channel-badge.email {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .channel-badge.sms {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .channel-badge.whatsapp {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .channel-badge.push {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .setting-actions {
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+    }
+
+    .action-btn {
+        padding: 6px 12px;
+        border: none;
+        border-radius: 6px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 4px;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-1px);
+        text-decoration: none;
+    }
+
+    .action-btn.edit {
+        background: #ffc107;
+        color: white;
+    }
+
+    .action-btn.test {
+        background: #17a2b8;
+        color: white;
+    }
+
+    .action-btn.toggle {
+        background: #28a745;
+        color: white;
+    }
+
+    .action-btn.delete {
+        background: #dc3545;
+        color: white;
+    }
+
+    .action-btn.view {
+        background: #6c757d;
+        color: white;
+    }
+
+    .status-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .status-badge.enabled {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .status-badge.disabled {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .priority-badge {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .priority-badge.low {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .priority-badge.medium {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .priority-badge.high {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .priority-badge.urgent {
+        background: #f5c6cb;
+        color: #721c24;
+    }
+
+    .recent-logs {
+        background: white;
+        border-radius: 15px;
+        padding: 30px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+        margin-bottom: 30px;
+    }
+
+    .log-item {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .log-item:last-child {
+        border-bottom: none;
+    }
+
+    .log-info {
+        flex: 1;
+    }
+
+    .log-channel {
+        font-weight: 600;
+        color: #667eea;
+        text-transform: uppercase;
+        font-size: 12px;
+    }
+
+    .log-recipient {
+        color: #333;
+        font-weight: 500;
+    }
+
+    .log-message {
+        color: #666;
+        font-size: 0.9rem;
+        margin: 5px 0;
+    }
+
+    .log-time {
+        color: #666;
+        font-size: 12px;
+    }
+
+    .log-status {
+        padding: 4px 8px;
+        border-radius: 12px;
+        font-size: 11px;
+        font-weight: 600;
+        text-transform: uppercase;
+    }
+
+    .log-status.sent {
+        background: #d1ecf1;
+        color: #0c5460;
+    }
+
+    .log-status.delivered {
+        background: #d4edda;
+        color: #155724;
+    }
+
+    .log-status.failed {
+        background: #f8d7da;
+        color: #721c24;
+    }
+
+    .log-status.pending {
+        background: #fff3cd;
+        color: #856404;
+    }
+
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+    }
+
+    .modal-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        border-radius: 15px 15px 0 0;
+        border: none;
+    }
+
+    .btn-close {
+        filter: invert(1);
+    }
+
+    .form-group {
+        margin-bottom: 20px;
+    }
+
+    .form-label {
+        display: block;
+        margin-bottom: 8px;
+        font-weight: 600;
+        color: #333;
+    }
+
+    .form-control {
+        width: 100%;
+        padding: 12px 15px;
+        border: 2px solid #e9ecef;
+        border-radius: 10px;
+        font-size: 14px;
+        transition: all 0.3s ease;
+    }
+
+    .form-control:focus {
+        outline: none;
+        border-color: #667eea;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+    }
+
+    .form-check {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        margin-bottom: 15px;
+    }
+
+    .form-check-input {
+        width: 18px;
+        height: 18px;
+        accent-color: #667eea;
+    }
+
+    .btn {
+        padding: 12px 24px;
+        border: none;
+        border-radius: 10px;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        text-decoration: none;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .btn-primary {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+    }
+
+    .btn-primary:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+    }
+
+    .btn-success {
+        background: linear-gradient(135deg, #28a745 0%, #20c997 100%);
+        color: white;
+    }
+
+    .btn-warning {
+        background: linear-gradient(135deg, #ffc107 0%, #fd7e14 100%);
+        color: white;
+    }
+
+    .btn-danger {
+        background: linear-gradient(135deg, #dc3545 0%, #e83e8c 100%);
+        color: white;
+    }
+
+    .btn-secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .empty-state {
+        text-align: center;
+        padding: 60px 20px;
+        color: #666;
+    }
+
+    .empty-state i {
+        font-size: 4rem;
+        color: #ddd;
+        margin-bottom: 20px;
+    }
+
+    .empty-state h5 {
+        color: #999;
+        margin-bottom: 10px;
+    }
+
+    .empty-state p {
+        color: #aaa;
+        margin-bottom: 20px;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="notification-settings-modern">
+    <!-- Notification Settings Header -->
+    <div class="notification-settings-header">
+        <h1 class="notification-settings-title">Notification Settings</h1>
+        <p class="notification-settings-subtitle">Manage automated notifications, alerts, and reminders for your business</p>
+        
+        <div class="quick-actions">
+            <a href="#" class="quick-action-btn" onclick="openAddNotificationModal()">
+                <i class="fas fa-plus"></i> Add Notification
+            </a>
+            <a href="#" class="quick-action-btn" onclick="viewNotificationLogs()">
+                <i class="fas fa-history"></i> Notification History
+            </a>
+            <a href="#" class="quick-action-btn" onclick="testAllNotifications()">
+                <i class="fas fa-paper-plane"></i> Test All
+            </a>
+            <a href="#" class="quick-action-btn" onclick="viewAnalytics()">
+                <i class="fas fa-chart-bar"></i> Analytics
+            </a>
+        </div>
+    </div>
+
+    <!-- Notification Statistics -->
+    <div class="notification-stats">
+        <div class="stat-card total">
+            <h2 class="stat-number">{{ data.total_notifications }}</h2>
+            <p class="stat-label">Total Notifications</p>
+        </div>
+        <div class="stat-card email">
+            <h2 class="stat-number">{{ data.email_notifications }}</h2>
+            <p class="stat-label">Email Notifications</p>
+        </div>
+        <div class="stat-card sms">
+            <h2 class="stat-number">{{ data.sms_notifications }}</h2>
+            <p class="stat-label">SMS Notifications</p>
+        </div>
+        <div class="stat-card whatsapp">
+            <h2 class="stat-number">{{ data.whatsapp_notifications }}</h2>
+            <p class="stat-label">WhatsApp Notifications</p>
+        </div>
+        <div class="stat-card push">
+            <h2 class="stat-number">{{ data.push_notifications }}</h2>
+            <p class="stat-label">Push Notifications</p>
+        </div>
+        <div class="stat-card success">
+            <h2 class="stat-number">{{ data.success_rate }}%</h2>
+            <p class="stat-label">Success Rate</p>
+        </div>
+    </div>
+
+    <!-- Notification Tabs -->
+    <div class="notification-tabs">
+        <div class="notification-tab active" onclick="switchNotificationTab('all')">
+            <i class="fas fa-list"></i> All Notifications
+            </div>
+        <div class="notification-tab" onclick="switchNotificationTab('email')">
+            <i class="fas fa-envelope"></i> Email
+            </div>
+        <div class="notification-tab" onclick="switchNotificationTab('sms')">
+            <i class="fas fa-sms"></i> SMS
+            </div>
+        <div class="notification-tab" onclick="switchNotificationTab('whatsapp')">
+            <i class="fab fa-whatsapp"></i> WhatsApp
+            </div>
+        <div class="notification-tab" onclick="switchNotificationTab('alerts')">
+            <i class="fas fa-bell"></i> Alerts
+            </div>
+    </div>
+
+    <!-- All Notifications -->
+    <div id="all-content" class="notification-content active">
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3><i class="fas fa-list"></i> All Notification Settings</h3>
+            <button class="btn btn-primary" onclick="openAddNotificationModal()">
+                <i class="fas fa-plus"></i> Add New Notification
+                </button>
+        </div>
+        
+        {% if data.settings %}
+            <div class="settings-grid">
+                {% for setting in data.settings %}
+                <div class="setting-card {% if not setting.enabled %}disabled{% endif %}">
+                    <div class="setting-header">
+                        <div>
+                            <div class="setting-category">{{ setting.category }}</div>
+                            <h5 class="setting-title">{{ setting.name }}</h5>
+                        </div>
+                        <div class="d-flex align-items-center gap-2">
+                            <span class="status-badge {% if setting.enabled %}enabled{% else %}disabled{% endif %}">
+                                {% if setting.enabled %}Enabled{% else %}Disabled{% endif %}
+                            </span>
+                            <span class="priority-badge {{ setting.priority }}">{{ setting.priority }}</span>
+            </div>
+        </div>
+        
+                    <div class="setting-description">{{ setting.description or 'No description provided' }}</div>
+                    
+                    <div class="setting-meta">
+                        <div class="meta-item">
+                            <i class="fas fa-clock"></i>
+                            {{ setting.frequency }}
+                        </div>
+                        <div class="meta-item">
+                            <i class="fas fa-paper-plane"></i>
+                            {{ setting.notification_count }} sent
+                        </div>
+                        {% if setting.last_sent %}
+                        <div class="meta-item">
+                            <i class="fas fa-calendar"></i>
+                            {{ setting.last_sent.strftime('%Y-%m-%d') }}
+                        </div>
+                                    {% endif %}
+                                </div>
+                    
+                    {% if setting.channels %}
+                    <div class="setting-channels">
+                        {% for channel in setting.channels %}
+                        <span class="channel-badge {{ channel }}">{{ channel }}</span>
+                        {% endfor %}
+                    </div>
+                    {% endif %}
+                    
+                    <div class="setting-actions">
+                        <button class="action-btn edit" onclick="editNotification({{ setting.id }})">
+                                        <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="action-btn test" onclick="testNotification({{ setting.id }})">
+                            <i class="fas fa-paper-plane"></i> Test
+                        </button>
+                        <button class="action-btn toggle" onclick="toggleNotification({{ setting.id }})">
+                            <i class="fas fa-{% if setting.enabled %}pause{% else %}play{% endif %}"></i>
+                            {% if setting.enabled %}Disable{% else %}Enable{% endif %}
+                        </button>
+                        <button class="action-btn delete" onclick="deleteNotification({{ setting.id }})">
+                                        <i class="fas fa-trash"></i> Delete
+                        </button>
+                                </div>
+                </div>
+                        {% endfor %}
+            </div>
+                    {% else %}
+            <div class="empty-state">
+                <i class="fas fa-bell-slash"></i>
+                <h5>No notification settings found</h5>
+                <p>Create your first notification setting to get started</p>
+                <button class="btn btn-primary" onclick="openAddNotificationModal()">
+                    <i class="fas fa-plus"></i> Create Notification
+                </button>
+                                </div>
+                    {% endif %}
+    </div>
+
+    <!-- Email Notifications -->
+    <div id="email-content" class="notification-content">
+        <h3><i class="fas fa-envelope"></i> Email Notifications</h3>
+        <div class="settings-grid">
+            {% for setting in data.settings %}
+                {% if 'email' in setting.channels %}
+                <div class="setting-card {% if not setting.enabled %}disabled{% endif %}">
+                    <div class="setting-header">
+                        <div>
+                            <div class="setting-category">{{ setting.category }}</div>
+                            <h5 class="setting-title">{{ setting.name }}</h5>
+                        </div>
+                        <span class="status-badge {% if setting.enabled %}enabled{% else %}disabled{% endif %}">
+                            {% if setting.enabled %}Enabled{% else %}Disabled{% endif %}
+                        </span>
+                    </div>
+                    <div class="setting-description">{{ setting.description or 'No description provided' }}</div>
+                    <div class="setting-actions">
+                        <button class="action-btn edit" onclick="editNotification({{ setting.id }})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="action-btn test" onclick="testNotification({{ setting.id }})">
+                            <i class="fas fa-paper-plane"></i> Test
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- SMS Notifications -->
+    <div id="sms-content" class="notification-content">
+        <h3><i class="fas fa-sms"></i> SMS Notifications</h3>
+        <div class="settings-grid">
+            {% for setting in data.settings %}
+                {% if 'sms' in setting.channels %}
+                <div class="setting-card {% if not setting.enabled %}disabled{% endif %}">
+                    <div class="setting-header">
+                        <div>
+                            <div class="setting-category">{{ setting.category }}</div>
+                            <h5 class="setting-title">{{ setting.name }}</h5>
+        </div>
+                        <span class="status-badge {% if setting.enabled %}enabled{% else %}disabled{% endif %}">
+                            {% if setting.enabled %}Enabled{% else %}Disabled{% endif %}
+                        </span>
+                    </div>
+                    <div class="setting-description">{{ setting.description or 'No description provided' }}</div>
+                    <div class="setting-actions">
+                        <button class="action-btn edit" onclick="editNotification({{ setting.id }})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="action-btn test" onclick="testNotification({{ setting.id }})">
+                            <i class="fas fa-paper-plane"></i> Test
+                        </button>
+                    </div>
+    </div>
+    {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- WhatsApp Notifications -->
+    <div id="whatsapp-content" class="notification-content">
+        <h3><i class="fab fa-whatsapp"></i> WhatsApp Notifications</h3>
+        <div class="settings-grid">
+            {% for setting in data.settings %}
+                {% if 'whatsapp' in setting.channels %}
+                <div class="setting-card {% if not setting.enabled %}disabled{% endif %}">
+                    <div class="setting-header">
+                        <div>
+                            <div class="setting-category">{{ setting.category }}</div>
+                            <h5 class="setting-title">{{ setting.name }}</h5>
+                        </div>
+                        <span class="status-badge {% if setting.enabled %}enabled{% else %}disabled{% endif %}">
+                            {% if setting.enabled %}Enabled{% else %}Disabled{% endif %}
+                        </span>
+                    </div>
+                    <div class="setting-description">{{ setting.description or 'No description provided' }}</div>
+                    <div class="setting-actions">
+                        <button class="action-btn edit" onclick="editNotification({{ setting.id }})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="action-btn test" onclick="testNotification({{ setting.id }})">
+                            <i class="fas fa-paper-plane"></i> Test
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Alerts -->
+    <div id="alerts-content" class="notification-content">
+        <h3><i class="fas fa-bell"></i> System Alerts</h3>
+        <div class="settings-grid">
+            {% for setting in data.settings %}
+                {% if setting.notification_type == 'alert' %}
+                <div class="setting-card {% if not setting.enabled %}disabled{% endif %}">
+                    <div class="setting-header">
+                        <div>
+                            <div class="setting-category">{{ setting.category }}</div>
+                            <h5 class="setting-title">{{ setting.name }}</h5>
+                        </div>
+                        <span class="status-badge {% if setting.enabled %}enabled{% else %}disabled{% endif %}">
+                            {% if setting.enabled %}Enabled{% else %}Disabled{% endif %}
+                        </span>
+                    </div>
+                    <div class="setting-description">{{ setting.description or 'No description provided' }}</div>
+                    <div class="setting-actions">
+                        <button class="action-btn edit" onclick="editNotification({{ setting.id }})">
+                            <i class="fas fa-edit"></i> Edit
+                        </button>
+                        <button class="action-btn test" onclick="testNotification({{ setting.id }})">
+                            <i class="fas fa-paper-plane"></i> Test
+                        </button>
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Recent Notification Logs -->
+    <div class="recent-logs">
+        <h3><i class="fas fa-history"></i> Recent Notifications</h3>
+        {% if data.recent_logs %}
+            {% for log in data.recent_logs %}
+            <div class="log-item">
+                <div class="log-info">
+                    <div class="log-channel">{{ log.channel.upper() }}</div>
+                    <div class="log-recipient">{{ log.recipient }}</div>
+                    <div class="log-message">{{ log.message_body }}</div>
+                    <div class="log-time">{{ log.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
+                </div>
+                <div class="log-status {{ log.status }}">{{ log.status }}</div>
+            </div>
+            {% endfor %}
+        {% else %}
+            <div class="empty-state">
+                <i class="fas fa-paper-plane"></i>
+                <h5>No notifications sent yet</h5>
+                <p>Send your first notification to see it here</p>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<!-- Add/Edit Notification Modal -->
+<div class="modal fade" id="notificationModal" tabindex="-1" aria-labelledby="notificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="notificationModalLabel">Notification Setting</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="notificationForm">
+                    <input type="hidden" id="notification-id">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Notification Name *</label>
+                                <input type="text" class="form-control" id="notification-name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Category *</label>
+                                <select class="form-control" id="notification-category" required>
+                                    <option value="">Select Category</option>
+                                    <option value="email">Email Notifications</option>
+                                    <option value="sms">SMS Notifications</option>
+                                    <option value="whatsapp">WhatsApp Notifications</option>
+                                    <option value="push">Push Notifications</option>
+                                    <option value="alert">System Alerts</option>
+                                    <option value="reminder">Reminders</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Notification Type *</label>
+                                <select class="form-control" id="notification-type" required>
+                                    <option value="">Select Type</option>
+                                    <option value="invoice">Invoice</option>
+                                    <option value="payment">Payment</option>
+                                    <option value="stock">Stock Alert</option>
+                                    <option value="expiry">Expiry Alert</option>
+                                    <option value="system">System Alert</option>
+                                    <option value="reminder">Reminder</option>
+                                    <option value="custom">Custom</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Priority</label>
+                                <select class="form-control" id="notification-priority">
+                                    <option value="low">Low</option>
+                                    <option value="medium" selected>Medium</option>
+                                    <option value="high">High</option>
+                                    <option value="urgent">Urgent</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Description</label>
+                        <textarea class="form-control" id="notification-description" rows="3"></textarea>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Channels *</label>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="channel-email" value="email">
+                            <label class="form-check-label" for="channel-email">Email</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="channel-sms" value="sms">
+                            <label class="form-check-label" for="channel-sms">SMS</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="channel-whatsapp" value="whatsapp">
+                            <label class="form-check-label" for="channel-whatsapp">WhatsApp</label>
+                        </div>
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="channel-push" value="push">
+                            <label class="form-check-label" for="channel-push">Push Notification</label>
+                        </div>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Recipients (one per line)</label>
+                        <textarea class="form-control" id="notification-recipients" rows="3" placeholder="admin@company.com&#10;+923001234567&#10;manager@company.com"></textarea>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Frequency</label>
+                                <select class="form-control" id="notification-frequency">
+                                    <option value="immediate">Immediate</option>
+                                    <option value="daily">Daily</option>
+                                    <option value="weekly">Weekly</option>
+                                    <option value="monthly">Monthly</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="form-group">
+                                <label class="form-label">Message Template</label>
+                                <textarea class="form-control" id="notification-template" rows="3" placeholder="Use variables like {customer_name}, {amount}, {date}"></textarea>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="notification-enabled" checked>
+                        <label class="form-check-label" for="notification-enabled">Enable this notification</label>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveNotification()">Save Notification</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Test Notification Modal -->
+<div class="modal fade" id="testNotificationModal" tabindex="-1" aria-labelledby="testNotificationModalLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="testNotificationModalLabel">Test Notification</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="testNotificationForm">
+                    <input type="hidden" id="test-notification-id">
+                    <div class="form-group">
+                        <label class="form-label">Test Recipient *</label>
+                        <input type="text" class="form-control" id="test-recipient" placeholder="Enter email or phone number" required>
+                    </div>
+                    <div class="form-group">
+                        <label class="form-label">Test Message</label>
+                        <textarea class="form-control" id="test-message" rows="3" placeholder="Optional custom test message"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="sendTestNotification()">Send Test</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentTab = 'all';
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Notification settings loaded successfully');
+});
+
+function switchNotificationTab(tab) {
+    // Update tab appearance
+    document.querySelectorAll('.notification-tab').forEach(tab => tab.classList.remove('active'));
+    document.querySelector(`[onclick="switchNotificationTab('${tab}')"]`).classList.add('active');
+    
+    // Update content visibility
+    document.querySelectorAll('.notification-content').forEach(content => content.classList.remove('active'));
+    document.getElementById(`${tab}-content`).classList.add('active');
+    
+    currentTab = tab;
+}
+
+function openAddNotificationModal() {
+    document.getElementById('notificationForm').reset();
+    document.getElementById('notification-id').value = '';
+    document.getElementById('notificationModalLabel').textContent = 'Add Notification Setting';
+    new bootstrap.Modal(document.getElementById('notificationModal')).show();
+}
+
+function editNotification(notificationId) {
+    // Load notification data and open modal
+    fetch(`/settings/api/notification-settings`)
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                const notification = data.settings.find(s => s.id === notificationId);
+                if (notification) {
+                    document.getElementById('notification-id').value = notification.id;
+                    document.getElementById('notification-name').value = notification.name;
+                    document.getElementById('notification-category').value = notification.category;
+                    document.getElementById('notification-type').value = notification.notification_type;
+                    document.getElementById('notification-priority').value = notification.priority;
+                    document.getElementById('notification-description').value = notification.description || '';
+                    document.getElementById('notification-frequency').value = notification.frequency;
+                    document.getElementById('notification-template').value = notification.message_template || '';
+                    document.getElementById('notification-enabled').checked = notification.enabled;
+                    
+                    // Set channels
+                    notification.channels.forEach(channel => {
+                        const checkbox = document.getElementById(`channel-${channel}`);
+                        if (checkbox) checkbox.checked = true;
+                    });
+                    
+                    // Set recipients
+                    document.getElementById('notification-recipients').value = notification.recipients.join('\n');
+                    
+                    document.getElementById('notificationModalLabel').textContent = 'Edit Notification Setting';
+                    new bootstrap.Modal(document.getElementById('notificationModal')).show();
+                }
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error loading notification data');
+        });
+}
+
+function saveNotification() {
+    const data = {
+        name: document.getElementById('notification-name').value,
+        category: document.getElementById('notification-category').value,
+        notification_type: document.getElementById('notification-type').value,
+        priority: document.getElementById('notification-priority').value,
+        description: document.getElementById('notification-description').value,
+        frequency: document.getElementById('notification-frequency').value,
+        message_template: document.getElementById('notification-template').value,
+        enabled: document.getElementById('notification-enabled').checked,
+        channels: [],
+        recipients: []
+    };
+    
+    // Get selected channels
+    document.querySelectorAll('input[type="checkbox"][id^="channel-"]:checked').forEach(checkbox => {
+        data.channels.push(checkbox.value);
+    });
+    
+    // Get recipients
+    const recipientsText = document.getElementById('notification-recipients').value;
+    if (recipientsText.trim()) {
+        data.recipients = recipientsText.split('\n').map(r => r.trim()).filter(r => r);
+    }
+    
+    if (!data.name || !data.category || !data.notification_type || data.channels.length === 0) {
+        alert('Please fill in all required fields');
+        return;
+    }
+    
+    const notificationId = document.getElementById('notification-id').value;
+    const url = notificationId ? `/settings/api/notification-settings/${notificationId}` : '/settings/api/notification-settings';
+    const method = notificationId ? 'PUT' : 'POST';
+    
+    fetch(url, {
+        method: method,
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert('Notification setting saved successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('notificationModal')).hide();
+            location.reload();
+        } else {
+            alert('Error saving notification: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error saving notification');
+    });
+}
+
+function testNotification(notificationId) {
+    document.getElementById('test-notification-id').value = notificationId;
+    new bootstrap.Modal(document.getElementById('testNotificationModal')).show();
+}
+
+function sendTestNotification() {
+    const notificationId = document.getElementById('test-notification-id').value;
+    const recipient = document.getElementById('test-recipient').value;
+    const message = document.getElementById('test-message').value;
+    
+    if (!recipient) {
+        alert('Please enter a test recipient');
+        return;
+    }
+    
+    fetch(`/settings/api/notification-settings/${notificationId}/test`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        body: JSON.stringify({
+            recipient: recipient,
+            message: message
+        })
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+            alert(data.message);
+            bootstrap.Modal.getInstance(document.getElementById('testNotificationModal')).hide();
+                location.reload();
+            } else {
+            alert('Error sending test: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error sending test notification');
+    });
+}
+
+function toggleNotification(notificationId) {
+    fetch(`/settings/api/notification-settings/${notificationId}/toggle`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        }
+    })
+    .then(response => response.json())
+    .then(data => {
+        if (data.success) {
+            alert(data.message);
+            location.reload();
+        } else {
+            alert('Error: ' + data.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error toggling notification');
+    });
+}
+
+function deleteNotification(notificationId) {
+    if (confirm('Are you sure you want to delete this notification setting?')) {
+        fetch(`/settings/api/notification-settings/${notificationId}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+            }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Notification setting deleted successfully');
+                location.reload();
+            } else {
+                alert('Error deleting notification: ' + data.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting notification');
+        });
+    }
+}
+
+function viewNotificationLogs() {
+    // Scroll to logs section
+    document.querySelector('.recent-logs').scrollIntoView({ behavior: 'smooth' });
+}
+
+function testAllNotifications() {
+    alert('Test all notifications functionality coming soon!');
+}
+
+function viewAnalytics() {
+    alert('Analytics functionality coming soon!');
+}
+</script>
+{% endblock %} 

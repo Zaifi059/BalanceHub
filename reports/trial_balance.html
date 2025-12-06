@@ -1,0 +1,266 @@
+{% extends "base.html" %}
+
+{% block title %}Trial Balance - {{ data.business.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row">
+        <div class="col-12">
+            <div class="page-header">
+                <div class="page-header-content">
+                    <h1 class="page-title">
+                        <i class="fas fa-calculator"></i>
+                        Trial Balance
+                    </h1>
+                    <p class="page-subtitle">Account balances verification for {{ data.business.name }}</p>
+    </div>
+                <div class="page-actions">
+                    <button class="btn btn-outline-primary" onclick="printReport()">
+                        <i class="fas fa-print"></i>
+                        Print
+                    </button>
+                    <button class="btn btn-primary" onclick="exportReport()">
+                        <i class="fas fa-download"></i>
+                        Export PDF
+                    </button>
+            </div>
+            </div>
+            </div>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card bg-primary text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Debits</h6>
+                            <h3 class="mb-0">${{ "%.2f"|format(data.total_debits) }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-arrow-left fa-2x"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-4">
+            <div class="card bg-success text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Total Credits</h6>
+                            <h3 class="mb-0">${{ "%.2f"|format(data.total_credits) }}</h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-arrow-right fa-2x"></i>
+                        </div>
+        </div>
+        </div>
+        </div>
+    </div>
+        <div class="col-md-4">
+            <div class="card {% if data.is_balanced %}bg-success{% else %}bg-danger{% endif %} text-white">
+                <div class="card-body">
+                    <div class="d-flex justify-content-between">
+                        <div>
+                            <h6 class="card-title">Balance Status</h6>
+                            <h3 class="mb-0">
+                                {% if data.is_balanced %}
+                                    <i class="fas fa-check"></i> Balanced
+                                {% else %}
+                                    <i class="fas fa-times"></i> Out of Balance
+                                {% endif %}
+                            </h3>
+                        </div>
+                        <div class="align-self-center">
+                            <i class="fas fa-{% if data.is_balanced %}check-circle{% else %}exclamation-triangle{% endif %} fa-2x"></i>
+                        </div>
+        </div>
+        </div>
+        </div>
+        </div>
+    </div>
+
+    <!-- Trial Balance Table -->
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="card-title mb-0">
+                        <i class="fas fa-table"></i>
+                        Trial Balance
+                    </h5>
+                    <p class="card-subtitle text-muted mb-0">
+                        As of {{ data.generated_at[:10] }}
+                    </p>
+        </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover">
+                            <thead class="table-dark">
+                <tr>
+                    <th>Account Code</th>
+                    <th>Account Name</th>
+                    <th>Account Type</th>
+                                    <th class="text-end">Debit Balance</th>
+                                    <th class="text-end">Credit Balance</th>
+                </tr>
+            </thead>
+            <tbody>
+                                {% for item in data.accounts %}
+                                <tr>
+                                    <td><code>{{ item.account_code }}</code></td>
+                                    <td>{{ item.account_name }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if item.account_type == 'Asset' %}primary{% elif item.account_type == 'Liability' %}warning{% elif item.account_type == 'Equity' %}success{% elif item.account_type == 'Revenue' %}info{% else %}secondary{% endif %}">
+                                            {{ item.account_type }}
+                                        </span>
+                    </td>
+                                    <td class="text-end">
+                                        {% if item.debit > 0 %}
+                                            ${{ "%.2f"|format(item.debit) }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                    </td>
+                                    <td class="text-end">
+                                        {% if item.credit > 0 %}
+                                            ${{ "%.2f"|format(item.credit) }}
+                                        {% else %}
+                                            -
+                                        {% endif %}
+                    </td>
+                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot class="table-dark">
+                                <tr>
+                                    <th colspan="3">TOTALS</th>
+                                    <th class="text-end">${{ "%.2f"|format(data.total_debits) }}</th>
+                                    <th class="text-end">${{ "%.2f"|format(data.total_credits) }}</th>
+                </tr>
+                            </tfoot>
+        </table>
+    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Balance Verification -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card {% if data.is_balanced %}border-success{% else %}border-danger{% endif %}">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">
+                        <i class="fas fa-{% if data.is_balanced %}check-circle{% else %}exclamation-triangle{% endif %}"></i>
+                        Balance Verification
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <h6>Verification Details</h6>
+                            <p><strong>Total Debits:</strong> ${{ "%.2f"|format(data.total_debits) }}</p>
+                            <p><strong>Total Credits:</strong> ${{ "%.2f"|format(data.total_credits) }}</p>
+                            <p><strong>Difference:</strong> 
+                                <span class="{% if data.is_balanced %}text-success{% else %}text-danger{% endif %}">
+                                    ${{ "%.2f"|format(data.total_debits - data.total_credits) }}
+                                </span>
+                            </p>
+                        </div>
+                        <div class="col-md-6">
+                            <h6>Status</h6>
+                            <p><strong>Balanced:</strong> 
+                                <span class="badge {% if data.is_balanced %}bg-success{% else %}bg-danger{% endif %}">
+                                    {% if data.is_balanced %}Yes{% else %}No{% endif %}
+                                </span>
+                            </p>
+                            <p><strong>Accounts Count:</strong> {{ data.accounts|length }}</p>
+                            <p><strong>Report Date:</strong> {{ data.generated_at }}</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Account Type Summary -->
+    <div class="row mt-4">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h6 class="card-title mb-0">Account Type Summary</h6>
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        {% set asset_total = data.accounts | selectattr('account_type', 'equalto', 'Asset') | sum(attribute='debit') %}
+                        {% set liability_total = data.accounts | selectattr('account_type', 'equalto', 'Liability') | sum(attribute='credit') %}
+                        {% set equity_total = data.accounts | selectattr('account_type', 'equalto', 'Equity') | sum(attribute='credit') %}
+                        {% set revenue_total = data.accounts | selectattr('account_type', 'equalto', 'Revenue') | sum(attribute='credit') %}
+                        {% set expense_total = data.accounts | selectattr('account_type', 'equalto', 'Expense') | sum(attribute='debit') %}
+                        
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h5 class="text-primary">${{ "%.2f"|format(asset_total) }}</h5>
+                                <p class="text-muted mb-0">Assets</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h5 class="text-warning">${{ "%.2f"|format(liability_total) }}</h5>
+                                <p class="text-muted mb-0">Liabilities</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h5 class="text-success">${{ "%.2f"|format(equity_total) }}</h5>
+                                <p class="text-muted mb-0">Equity</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h5 class="text-info">${{ "%.2f"|format(revenue_total) }}</h5>
+                                <p class="text-muted mb-0">Revenue</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h5 class="text-secondary">${{ "%.2f"|format(expense_total) }}</h5>
+                                <p class="text-muted mb-0">Expenses</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2">
+                            <div class="text-center">
+                                <h5 class="text-dark">${{ "%.2f"|format(data.total_debits) }}</h5>
+                                <p class="text-muted mb-0">Total Debits</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+function printReport() {
+    window.print();
+}
+
+function exportReport() {
+    // In a real implementation, this would generate a PDF
+    alert('PDF export functionality would be implemented here');
+}
+
+// Auto-refresh data every 5 minutes
+setInterval(function() {
+    // In a real implementation, this would refresh the data
+    console.log('Refreshing trial balance data...');
+}, 300000);
+</script>
+{% endblock %} 

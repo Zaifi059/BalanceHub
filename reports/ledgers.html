@@ -1,0 +1,300 @@
+{% extends "base.html" %}
+
+{% block title %}Account Ledgers - {{ session.current_business.name if session.get('current_business') else 'Business Accounts' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .ledgers-modern {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .ledgers-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .ledgers-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .ledgers-title {
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .ledgers-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin: 10px 0 0 0;
+    }
+
+    .account-type-section {
+        margin-bottom: 40px;
+    }
+
+    .account-type-header {
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border-left: 5px solid var(--accent-color);
+    }
+
+    .account-type-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0 0 10px 0;
+        text-transform: capitalize;
+    }
+
+    .account-type-count {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .accounts-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+        gap: 20px;
+    }
+
+    .account-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .account-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 15px 30px rgba(0,0,0,0.15);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .account-code {
+        font-size: 0.9rem;
+        color: #6c757d;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+
+    .account-name {
+        font-size: 1.1rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 15px;
+    }
+
+    .account-balance {
+        font-size: 1.3rem;
+        font-weight: 800;
+        margin-bottom: 10px;
+    }
+
+    .account-balance.positive {
+        color: #28a745;
+    }
+
+    .account-balance.negative {
+        color: #dc3545;
+    }
+
+    .account-balance.zero {
+        color: #6c757d;
+    }
+
+    .account-type-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .account-type-badge.asset {
+        background: #e3f2fd;
+        color: #1976d2;
+    }
+
+    .account-type-badge.liability {
+        background: #fff3e0;
+        color: #f57c00;
+    }
+
+    .account-type-badge.equity {
+        background: #e8f5e8;
+        color: #388e3c;
+    }
+
+    .account-type-badge.revenue {
+        background: #f3e5f5;
+        color: #7b1fa2;
+    }
+
+    .account-type-badge.expense {
+        background: #ffebee;
+        color: #d32f2f;
+    }
+
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        text-align: center;
+        border-left: 4px solid #667eea;
+    }
+
+    .stat-number {
+        font-size: 2rem;
+        font-weight: 800;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 5px;
+    }
+
+    @media (max-width: 768px) {
+        .ledgers-title {
+            font-size: 2rem;
+        }
+        
+        .accounts-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="ledgers-modern">
+    <!-- Ledgers Header -->
+    <div class="ledgers-header">
+        <h1 class="ledgers-title">Account Ledgers</h1>
+        <p class="ledgers-subtitle">Complete chart of accounts with individual ledger details</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+        <div class="stat-card">
+            <h2 class="stat-number">{{ data.total_accounts }}</h2>
+            <p class="stat-label">Total Accounts</p>
+        </div>
+        <div class="stat-card">
+            <h2 class="stat-number">{{ data.accounts_by_type.asset|length if data.accounts_by_type.asset else 0 }}</h2>
+            <p class="stat-label">Asset Accounts</p>
+        </div>
+        <div class="stat-card">
+            <h2 class="stat-number">{{ data.accounts_by_type.liability|length if data.accounts_by_type.liability else 0 }}</h2>
+            <p class="stat-label">Liability Accounts</p>
+        </div>
+        <div class="stat-card">
+            <h2 class="stat-number">{{ data.accounts_by_type.equity|length if data.accounts_by_type.equity else 0 }}</h2>
+            <p class="stat-label">Equity Accounts</p>
+        </div>
+    </div>
+
+    <!-- Account Types -->
+    {% for account_type, accounts in data.accounts_by_type.items() %}
+    <div class="account-type-section">
+        <div class="account-type-header">
+            <h3 class="account-type-title">{{ account_type.title() }} Accounts</h3>
+            <p class="account-type-count">{{ accounts|length }} account{{ 's' if accounts|length != 1 else '' }}</p>
+        </div>
+        
+        <div class="accounts-grid">
+            {% for account in accounts %}
+            <a href="{{ url_for('reports.account_ledger', account_id=account.id) }}" class="account-card">
+                <div class="account-code">{{ account.account_code }}</div>
+                <h4 class="account-name">{{ account.account_name }}</h4>
+                
+                <div class="account-balance {% if account.current_balance > 0 %}positive{% elif account.current_balance < 0 %}negative{% else %}zero{% endif %}">
+                    ${{ "%.2f"|format(account.current_balance) }}
+                </div>
+                
+                <span class="account-type-badge {{ account.account_type }}">
+                    {{ account.account_type.title() }}
+                </span>
+            </a>
+            {% endfor %}
+        </div>
+    </div>
+    {% endfor %}
+
+    {% if not data.accounts_by_type %}
+    <div class="text-center py-5">
+        <div class="card">
+            <div class="card-body">
+                <h5 class="card-title">No Accounts Found</h5>
+                <p class="card-text">No active accounts found in your chart of accounts.</p>
+                <a href="{{ url_for('reports.index') }}" class="btn btn-primary">
+                    <i class="fas fa-arrow-left"></i> Back to Reports
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Ledgers page loaded successfully');
+    
+    // Add click tracking for analytics
+    const accountCards = document.querySelectorAll('.account-card');
+    accountCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const accountName = this.querySelector('.account-name').textContent;
+            console.log('Account ledger accessed:', accountName);
+        });
+    });
+});
+</script>
+{% endblock %}

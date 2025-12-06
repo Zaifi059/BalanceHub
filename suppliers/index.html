@@ -1,0 +1,191 @@
+{% extends "base.html" %}
+
+{% block title %}Suppliers - UR Accounts{% endblock %}
+{% block page_title %}Suppliers{% endblock %}
+
+{% block content %}
+<div class="card">
+    <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="card-title mb-0">
+            <i class="fas fa-truck text-primary"></i> Supplier List
+            {% if selected_area %}
+                <span class="badge bg-primary ms-2">{{ selected_area.name }} ({{ selected_area.code }})</span>
+            {% endif %}
+        </h5>
+        <div>
+            <a href="{{ url_for('areas.index') }}" class="btn btn-outline-info me-2">
+                <i class="fas fa-map-marker-alt"></i> Manage Areas
+            </a>
+            <a href="{{ url_for('suppliers.create') }}" class="btn btn-primary">
+                <i class="fas fa-plus"></i> Add Supplier
+            </a>
+        </div>
+    </div>
+    <div class="card-body">
+        <!-- Area Filter -->
+        {% if areas %}
+        <div class="row mb-3">
+            <div class="col-md-6">
+                <form method="GET" class="d-flex">
+                    <select name="area_id" class="form-select me-2" onchange="this.form.submit()">
+                        <option value="">All Areas</option>
+                        {% for area in areas %}
+                            <option value="{{ area.id }}" {% if selected_area and selected_area.id == area.id %}selected{% endif %}>
+                                {{ area.name }} ({{ area.code }})
+                            </option>
+                        {% endfor %}
+                    </select>
+                    {% if selected_area %}
+                        <a href="{{ url_for('suppliers.index') }}" class="btn btn-outline-secondary">Clear Filter</a>
+                    {% endif %}
+                </form>
+            </div>
+            <div class="col-md-6 text-end">
+                <small class="text-muted">
+                    Showing {{ suppliers|length }} supplier{{ 's' if suppliers|length != 1 else '' }}
+                    {% if selected_area %}in {{ selected_area.name }}{% endif %}
+                </small>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if suppliers %}
+            <div class="table-responsive">
+                <table class="table table-hover" id="suppliersTable">
+                    <thead>
+                        <tr>
+                            <th>Name</th>
+                            <th>Contact Person</th>
+                            <th>Phone</th>
+                            <th>Email</th>
+                            <th>Area</th>
+                            <th>City</th>
+                            <th>Opening Balance</th>
+                            <th>Current Balance</th>
+                            <th>Credit Limit</th>
+                            <th>Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for supplier in suppliers %}
+                        <tr>
+                            <td>
+                                <strong>{{ supplier.name }}</strong>
+                                {% if supplier.preferred_supplier %}
+                                    <span class="badge bg-warning ms-1">Preferred</span>
+                                {% endif %}
+                                {% if not supplier.is_active %}
+                                    <span class="badge bg-secondary ms-1">Inactive</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ supplier.contact_person or '-' }}</td>
+                            <td>{{ supplier.phone or '-' }}</td>
+                            <td>{{ supplier.email or '-' }}</td>
+                            <td>
+                                {% if supplier.area %}
+                                    <span class="badge bg-primary">{{ supplier.area.code }}</span>
+                                    <br><small class="text-muted">{{ supplier.area.name }}</small>
+                                {% else %}
+                                    <span class="text-muted">No Area</span>
+                                {% endif %}
+                            </td>
+                            <td>{{ supplier.city or '-' }}</td>
+                            <td>
+                                {% if supplier.opening_balance %}
+                                    <span class="badge bg-info">
+                                        {{ "PKR {:,.2f}".format(supplier.opening_balance) }}
+                                    </span>
+                                    <br><small class="text-muted">{{ supplier.balance_type.title() }}</small>
+                                {% else %}
+                                    <span class="text-muted">No Balance</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if supplier.current_balance %}
+                                    {% if supplier.current_balance > 0 %}
+                                        <span class="text-danger">
+                                            <strong>PKR {{ "{:,.2f}".format(supplier.current_balance) }}</strong>
+                                            <br><small>We owe supplier</small>
+                                        </span>
+                                    {% elif supplier.current_balance < 0 %}
+                                        <span class="text-success">
+                                            <strong>PKR {{ "{:,.2f}".format(-supplier.current_balance) }}</strong>
+                                            <br><small>Supplier owes us</small>
+                                        </span>
+                                    {% else %}
+                                        <span class="text-muted">Zero</span>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">Zero</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                {% if supplier.credit_limit %}
+                                    <span class="text-success">PKR {{ "{:,.2f}".format(supplier.credit_limit) }}</span>
+                                    {% if supplier.payment_period %}
+                                        <br><small class="text-muted">{{ supplier.payment_period }} days</small>
+                                    {% endif %}
+                                {% else %}
+                                    <span class="text-muted">No Limit</span>
+                                {% endif %}
+                            </td>
+                            <td>
+                                <div class="btn-group" role="group">
+                                    <a href="{{ url_for('suppliers.show', id=supplier.id) }}" class="btn btn-sm btn-info" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <a href="{{ url_for('suppliers.edit', id=supplier.id) }}" class="btn btn-sm btn-warning" title="Edit">
+                                        <i class="fas fa-edit"></i>
+                                    </a>
+                                    <form method="POST" action="{{ url_for('suppliers.delete', id=supplier.id) }}" class="d-inline">
+                                        <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('Are you sure you want to delete this supplier?')" title="Delete">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </form>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        {% else %}
+            <div class="text-center py-5">
+                <i class="fas fa-truck fa-3x text-muted mb-3"></i>
+                <h5 class="text-muted">
+                    {% if selected_area %}
+                        No suppliers found in {{ selected_area.name }}
+                    {% else %}
+                        No suppliers found
+                    {% endif %}
+                </h5>
+                <p class="text-muted">
+                    {% if selected_area %}
+                        Start by adding a supplier to this area
+                    {% else %}
+                        Start by adding your first supplier
+                    {% endif %}
+                </p>
+                <a href="{{ url_for('suppliers.create') }}{% if selected_area %}?area_id={{ selected_area.id }}{% endif %}" class="btn btn-primary">
+                    <i class="fas fa-plus"></i> Add Supplier
+                </a>
+            </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+$(document).ready(function() {
+    $('#suppliersTable').DataTable({
+        responsive: true,
+        order: [[0, 'asc']],
+        pageLength: 25,
+        language: {
+            search: "Search suppliers:",
+            lengthMenu: "Show _MENU_ suppliers per page",
+            info: "Showing _START_ to _END_ of _TOTAL_ suppliers"
+        }
+    });
+});
+</script>
+{% endblock %}

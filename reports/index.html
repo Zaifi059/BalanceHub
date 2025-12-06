@@ -1,0 +1,385 @@
+{% extends "base.html" %}
+
+{% block title %}Reports & Analytics - {{ session.current_business.name if session.get('current_business') else 'Business Accounts' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .reports-modern {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .reports-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .reports-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .reports-title {
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .reports-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin: 10px 0 0 0;
+    }
+
+    .reports-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+        gap: 25px;
+        margin-bottom: 30px;
+    }
+
+    .report-card {
+        background: white;
+        padding: 30px;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        transition: all 0.3s ease;
+        border: 1px solid rgba(0,0,0,0.05);
+        position: relative;
+        overflow: hidden;
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .report-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 4px;
+        background: linear-gradient(90deg, var(--gradient-start), var(--gradient-end));
+    }
+
+    .report-card:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 20px 40px rgba(0,0,0,0.15);
+        text-decoration: none;
+        color: inherit;
+    }
+
+    .report-card.financial { --gradient-start: #667eea; --gradient-end: #764ba2; }
+    .report-card.inventory { --gradient-start: #f093fb; --gradient-end: #f5576c; }
+    .report-card.sales { --gradient-start: #4facfe; --gradient-end: #00f2fe; }
+    .report-card.customers { --gradient-start: #a8edea; --gradient-end: #fed6e3; }
+
+    .report-icon {
+        width: 60px;
+        height: 60px;
+        border-radius: 15px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 24px;
+        color: white;
+        background: linear-gradient(135deg, var(--gradient-start), var(--gradient-end));
+        margin-bottom: 20px;
+    }
+
+    .report-title {
+        font-size: 1.3rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0 0 10px 0;
+    }
+
+    .report-description {
+        color: #6c757d;
+        font-size: 0.95rem;
+        line-height: 1.5;
+        margin-bottom: 20px;
+    }
+
+    .report-features {
+        list-style: none;
+        padding: 0;
+        margin: 0;
+    }
+
+    .report-features li {
+        padding: 5px 0;
+        color: #495057;
+        font-size: 0.9rem;
+        position: relative;
+        padding-left: 20px;
+    }
+
+    .report-features li::before {
+        content: '✓';
+        position: absolute;
+        left: 0;
+        color: #28a745;
+        font-weight: bold;
+    }
+
+    .quick-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        text-align: center;
+        border-left: 4px solid #667eea;
+    }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 5px;
+    }
+
+    @media (max-width: 768px) {
+        .reports-title {
+            font-size: 2rem;
+        }
+        
+        .reports-grid {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="reports-modern">
+    <!-- Reports Header -->
+    <div class="reports-header">
+        <h1 class="reports-title">Reports & Analytics</h1>
+        <p class="reports-subtitle">Comprehensive business intelligence and financial reporting</p>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="quick-stats">
+        <div class="stat-card">
+            <h2 class="stat-number">${{ "%.0f"|format(data.total_revenue) }}</h2>
+            <p class="stat-label">Total Revenue</p>
+        </div>
+        <div class="stat-card">
+            <h2 class="stat-number">{{ data.total_customers }}</h2>
+            <p class="stat-label">Active Customers</p>
+        </div>
+        <div class="stat-card">
+            <h2 class="stat-number">{{ data.total_products }}</h2>
+            <p class="stat-label">Products in Stock</p>
+        </div>
+        <div class="stat-card">
+            <h2 class="stat-number">${{ "%.0f"|format(data.net_profit) }}</h2>
+            <p class="stat-label">Net Profit</p>
+        </div>
+    </div>
+
+    <!-- Reports Grid -->
+    <div class="reports-grid">
+        <!-- Financial Reports -->
+        <a href="{{ url_for('reports.profit_loss') }}" class="report-card financial">
+            <div class="report-icon">
+                <i class="fas fa-chart-pie"></i>
+            </div>
+            <h3 class="report-title">Profit & Loss Statement</h3>
+            <p class="report-description">Comprehensive financial performance analysis with revenue, expenses, and profitability metrics.</p>
+            <ul class="report-features">
+                <li>Monthly and yearly comparisons</li>
+                <li>Revenue vs expense analysis</li>
+                <li>Profit margin calculations</li>
+                <li>Export to PDF/Excel</li>
+            </ul>
+        </a>
+
+        <a href="{{ url_for('reports.balance_sheet') }}" class="report-card financial">
+            <div class="report-icon">
+                <i class="fas fa-balance-scale"></i>
+            </div>
+            <h3 class="report-title">Balance Sheet</h3>
+            <p class="report-description">Complete financial position overview with assets, liabilities, and equity analysis.</p>
+            <ul class="report-features">
+                <li>Asset and liability breakdown</li>
+                <li>Equity calculations</li>
+                <li>Financial ratios</li>
+                <li>Period comparisons</li>
+            </ul>
+        </a>
+
+        <a href="{{ url_for('reports.trial_balance') }}" class="report-card financial">
+            <div class="report-icon">
+                <i class="fas fa-calculator"></i>
+            </div>
+            <h3 class="report-title">Trial Balance</h3>
+            <p class="report-description">Detailed account balances and transaction summaries for accounting verification.</p>
+            <ul class="report-features">
+                <li>Account balance verification</li>
+                <li>Debit/credit summaries</li>
+                <li>Adjustment entries</li>
+                <li>Audit trail</li>
+            </ul>
+        </a>
+
+        <!-- Inventory Reports -->
+        <a href="{{ url_for('reports.inventory_reports') }}" class="report-card inventory">
+            <div class="report-icon">
+                <i class="fas fa-boxes"></i>
+            </div>
+            <h3 class="report-title">Inventory Reports</h3>
+            <p class="report-description">Complete stock analysis, movement tracking, and chemical inventory management.</p>
+            <ul class="report-features">
+                <li>Stock level monitoring</li>
+                <li>Low stock alerts</li>
+                <li>Batch tracking</li>
+                <li>Expiry date management</li>
+            </ul>
+        </a>
+
+        <!-- Sales Reports -->
+        <a href="{{ url_for('reports.sales_reports') }}" class="report-card sales">
+            <div class="report-icon">
+                <i class="fas fa-chart-line"></i>
+            </div>
+            <h3 class="report-title">Sales Reports</h3>
+            <p class="report-description">Revenue analysis, customer performance, and sales trend identification.</p>
+            <ul class="report-features">
+                <li>Revenue trends</li>
+                <li>Customer performance</li>
+                <li>Product sales analysis</li>
+                <li>Geographic sales data</li>
+            </ul>
+        </a>
+
+        <!-- Customer Reports -->
+        <a href="{{ url_for('reports.customer_report') }}" class="report-card customers">
+            <div class="report-icon">
+                <i class="fas fa-users"></i>
+            </div>
+            <h3 class="report-title">Customer Analytics</h3>
+            <p class="report-description">Customer behavior analysis, payment patterns, and relationship insights.</p>
+            <ul class="report-features">
+                <li>Customer segmentation</li>
+                <li>Payment history</li>
+                <li>Credit analysis</li>
+                <li>Area-wise distribution</li>
+            </ul>
+        </a>
+
+        <!-- Account Ledgers -->
+        <a href="{{ url_for('reports.ledgers') }}" class="report-card financial">
+            <div class="report-icon">
+                <i class="fas fa-book"></i>
+            </div>
+            <h3 class="report-title">Account Ledgers</h3>
+            <p class="report-description">Individual account ledgers with detailed transaction history and running balances.</p>
+            <ul class="report-features">
+                <li>All chart of accounts</li>
+                <li>Transaction history</li>
+                <li>Running balances</li>
+                <li>Date range filtering</li>
+            </ul>
+        </a>
+
+        <!-- Recovery Report -->
+        <a href="{{ url_for('reports.recovery_report') }}" class="report-card customers">
+            <div class="report-icon">
+                <i class="fas fa-hand-holding-usd"></i>
+            </div>
+            <h3 class="report-title">Recovery Report</h3>
+            <p class="report-description">Outstanding receivables and payables analysis with aging reports.</p>
+            <ul class="report-features">
+                <li>Outstanding receivables</li>
+                <li>Outstanding payables</li>
+                <li>Aging analysis</li>
+                <li>Collection tracking</li>
+            </ul>
+        </a>
+
+        <!-- Customer Ledgers -->
+        <a href="{{ url_for('reports.customer_ledgers') }}" class="report-card customers">
+            <div class="report-icon">
+                <i class="fas fa-user-friends"></i>
+            </div>
+            <h3 class="report-title">Customer Ledgers</h3>
+            <p class="report-description">Individual customer transaction ledgers with detailed history and balances.</p>
+            <ul class="report-features">
+                <li>All customer transactions</li>
+                <li>Invoice and receipt history</li>
+                <li>Running balances</li>
+                <li>Date range filtering</li>
+            </ul>
+        </a>
+
+        <!-- Supplier Ledgers -->
+        <a href="{{ url_for('reports.supplier_ledgers') }}" class="report-card financial">
+            <div class="report-icon">
+                <i class="fas fa-truck"></i>
+            </div>
+            <h3 class="report-title">Supplier Ledgers</h3>
+            <p class="report-description">Individual supplier transaction ledgers with purchase and payment history.</p>
+            <ul class="report-features">
+                <li>All supplier transactions</li>
+                <li>Purchase and payment history</li>
+                <li>Running balances</li>
+                <li>Date range filtering</li>
+            </ul>
+        </a>
+
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Reports dashboard loaded successfully');
+    
+    // Add click tracking for analytics
+    const reportCards = document.querySelectorAll('.report-card');
+    reportCards.forEach(card => {
+        card.addEventListener('click', function() {
+            const reportName = this.querySelector('.report-title').textContent;
+            console.log('Report accessed:', reportName);
+        });
+    });
+});
+</script>
+{% endblock %} 

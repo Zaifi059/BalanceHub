@@ -1,0 +1,1198 @@
+{% extends "base.html" %}
+
+{% block title %}Tax & GST/VAT Settings - {{ session.current_business.name if session.get('current_business') else 'Business Accounts' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .tax-settings-modern {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .tax-settings-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .tax-settings-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .tax-settings-title {
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .tax-settings-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin: 10px 0 0 0;
+    }
+
+    .quick-actions {
+        display: flex;
+        gap: 15px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .quick-action-btn {
+        background: rgba(255,255,255,0.2);
+        border: 1px solid rgba(255,255,255,0.3);
+        color: white;
+        padding: 12px 24px;
+        border-radius: 25px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        backdrop-filter: blur(10px);
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .quick-action-btn:hover {
+        background: rgba(255,255,255,0.3);
+        transform: translateY(-2px);
+        color: white;
+        text-decoration: none;
+    }
+
+    .tax-overview-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .stat-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        text-align: center;
+        border-left: 4px solid var(--accent-color);
+        transition: all 0.3s ease;
+    }
+
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    }
+
+    .stat-card.rates { --accent-color: #17a2b8; }
+    .stat-card.active { --accent-color: #28a745; }
+    .stat-card.inactive { --accent-color: #dc3545; }
+    .stat-card.exemptions { --accent-color: #ffc107; }
+    .stat-card.compliance { --accent-color: #6f42c1; }
+    .stat-card.collected { --accent-color: #fd7e14; }
+    .stat-card.paid { --accent-color: #20c997; }
+    .stat-card.liability { --accent-color: #e83e8c; }
+
+    .stat-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .stat-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 5px;
+    }
+
+    .tax-settings-content {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 30px;
+    }
+
+    .tax-rates-section {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        overflow: hidden;
+    }
+
+    .section-header {
+        background: #f8f9fa;
+        padding: 25px;
+        border-bottom: 1px solid #e9ecef;
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+    }
+
+    .section-subtitle {
+        color: #6c757d;
+        font-size: 0.9rem;
+        margin: 5px 0 0 0;
+    }
+
+    .tax-rates-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .tax-rates-table th {
+        background: #f8f9fa;
+        padding: 15px;
+        text-align: left;
+        font-weight: 700;
+        color: #2c3e50;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .tax-rates-table td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: top;
+    }
+
+    .tax-rates-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .tax-name {
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .tax-code {
+        font-size: 0.8rem;
+        color: #6c757d;
+        background: #e9ecef;
+        padding: 2px 8px;
+        border-radius: 12px;
+        display: inline-block;
+    }
+
+    .tax-rate {
+        font-size: 1.2rem;
+        font-weight: 700;
+        color: #2c3e50;
+    }
+
+    .tax-rate.percentage {
+        color: #28a745;
+    }
+
+    .tax-rate.zero {
+        color: #6c757d;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-badge.active {
+        background: #e8f5e8;
+        color: #388e3c;
+    }
+
+    .status-badge.inactive {
+        background: #ffebee;
+        color: #d32f2f;
+    }
+
+    .exemptions-list {
+        font-size: 0.9rem;
+        color: #6c757d;
+        line-height: 1.4;
+    }
+
+    .exemptions-list ul {
+        margin: 0;
+        padding-left: 15px;
+    }
+
+    .exemptions-list li {
+        margin-bottom: 2px;
+    }
+
+    .tax-details {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .tax-details strong {
+        color: #2c3e50;
+    }
+
+    .compliance-section {
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 30px rgba(0,0,0,0.08);
+        padding: 25px;
+        margin-bottom: 30px;
+    }
+
+    .compliance-score {
+        text-align: center;
+        margin-bottom: 20px;
+    }
+
+    .compliance-circle {
+        width: 120px;
+        height: 120px;
+        border-radius: 50%;
+        background: conic-gradient(#28a745 0deg, #28a745 calc(var(--score) * 3.6deg), #e9ecef calc(var(--score) * 3.6deg));
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 15px;
+        position: relative;
+    }
+
+    .compliance-circle::before {
+        content: '';
+        position: absolute;
+        width: 80px;
+        height: 80px;
+        background: white;
+        border-radius: 50%;
+    }
+
+    .compliance-score-value {
+        position: relative;
+        z-index: 1;
+        font-size: 2rem;
+        font-weight: 800;
+        color: #2c3e50;
+    }
+
+    .compliance-label {
+        font-size: 1rem;
+        font-weight: 600;
+        color: #2c3e50;
+    }
+
+    .compliance-metrics {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 15px;
+        margin-top: 20px;
+    }
+
+    .compliance-metric {
+        text-align: center;
+        padding: 15px;
+        background: #f8f9fa;
+        border-radius: 10px;
+    }
+
+    .compliance-metric-value {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .compliance-metric-label {
+        font-size: 0.8rem;
+        color: #6c757d;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .action-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 20px;
+        flex-wrap: wrap;
+    }
+
+    .action-btn {
+        padding: 10px 20px;
+        border: none;
+        border-radius: 10px;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        text-decoration: none;
+    }
+
+    .action-btn.primary {
+        background: #667eea;
+        color: white;
+    }
+
+    .action-btn.secondary {
+        background: #6c757d;
+        color: white;
+    }
+
+    .action-btn.success {
+        background: #28a745;
+        color: white;
+    }
+
+    .action-btn.warning {
+        background: #ffc107;
+        color: #212529;
+    }
+
+    .action-btn:hover {
+        transform: translateY(-2px);
+        text-decoration: none;
+    }
+
+    @media (max-width: 768px) {
+        .tax-settings-title {
+            font-size: 2rem;
+        }
+        
+        .quick-actions {
+            justify-content: center;
+        }
+        
+        .tax-rates-table {
+            font-size: 0.9rem;
+        }
+        
+        .tax-rates-table th,
+        .tax-rates-table td {
+            padding: 10px 8px;
+        }
+        
+        .action-buttons {
+            justify-content: center;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tax-settings-modern">
+    <!-- Tax Settings Header -->
+    <div class="tax-settings-header">
+        <h1 class="tax-settings-title">Tax & GST/VAT Settings</h1>
+        <p class="tax-settings-subtitle">Manage tax rates, exemptions, and compliance for Pakistan</p>
+        
+        <div class="quick-actions">
+            <a href="#" class="quick-action-btn" onclick="addTaxRate()">
+                <i class="fas fa-plus"></i> Add Tax Rate
+            </a>
+            <a href="#" class="quick-action-btn" onclick="exportTaxData()">
+                <i class="fas fa-download"></i> Export Tax Data
+            </a>
+            <a href="#" class="quick-action-btn" onclick="printTaxSettings()">
+                <i class="fas fa-print"></i> Print Settings
+            </a>
+            <a href="#" class="quick-action-btn" onclick="viewCompliance()">
+                <i class="fas fa-chart-line"></i> Compliance Report
+            </a>
+        </div>
+    </div>
+
+    <!-- Tax Overview Statistics -->
+    <div class="tax-overview-stats">
+        <div class="stat-card rates">
+            <h2 class="stat-number">{{ data.total_tax_rates }}</h2>
+            <p class="stat-label">Total Tax Rates</p>
+        </div>
+        <div class="stat-card active">
+            <h2 class="stat-number">{{ data.active_tax_rates }}</h2>
+            <p class="stat-label">Active Rates</p>
+        </div>
+        <div class="stat-card inactive">
+            <h2 class="stat-number">{{ data.inactive_tax_rates }}</h2>
+            <p class="stat-label">Inactive Rates</p>
+        </div>
+        <div class="stat-card exemptions">
+            <h2 class="stat-number">{{ data.total_exemptions }}</h2>
+            <p class="stat-label">Total Exemptions</p>
+        </div>
+        <div class="stat-card collected">
+            <h2 class="stat-number">${{ "%.0f"|format(data.total_tax_collected/1000) }}K</h2>
+            <p class="stat-label">Tax Collected</p>
+        </div>
+        <div class="stat-card paid">
+            <h2 class="stat-number">${{ "%.0f"|format(data.total_tax_paid/1000) }}K</h2>
+            <p class="stat-label">Tax Paid</p>
+        </div>
+        <div class="stat-card liability">
+            <h2 class="stat-number">${{ "%.0f"|format(data.net_tax_liability/1000) }}K</h2>
+            <p class="stat-label">Net Liability</p>
+        </div>
+    </div>
+
+    <!-- Compliance Section -->
+    <div class="compliance-section">
+        <div class="compliance-score">
+            <div class="compliance-circle" style="--score: {{ data.compliance_score }}">
+                <div class="compliance-score-value">{{ data.compliance_score }}%</div>
+            </div>
+            <div class="compliance-label">Tax Compliance Score</div>
+            </div>
+        
+        <div class="compliance-metrics">
+            <div class="compliance-metric">
+                <div class="compliance-metric-value">{{ data.total_invoices }}</div>
+                <div class="compliance-metric-label">Total Invoices</div>
+            </div>
+            <div class="compliance-metric">
+                <div class="compliance-metric-value">{{ data.total_purchases }}</div>
+                <div class="compliance-metric-label">Total Purchases</div>
+            </div>
+            <div class="compliance-metric">
+                <div class="compliance-metric-value">{{ data.total_expenses }}</div>
+                <div class="compliance-metric-label">Total Expenses</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tax Settings Content -->
+    <div class="tax-settings-content">
+        <!-- Tax Rates Section -->
+        <div class="tax-rates-section">
+            <div class="section-header">
+                <h2 class="section-title">
+                    <i class="fas fa-percentage"></i>
+                    Tax Rates & Settings
+                </h2>
+                <p class="section-subtitle">Manage all tax rates applicable to your business in Pakistan</p>
+        </div>
+        
+            <div style="overflow-x: auto;">
+                <table class="tax-rates-table">
+                <thead>
+                    <tr>
+                            <th>Tax Name</th>
+                            <th>Code</th>
+                        <th>Rate</th>
+                        <th>Status</th>
+                            <th>Applicable On</th>
+                            <th>Filing Frequency</th>
+                            <th>Due Date</th>
+                            <th>Exemptions</th>
+                        <th>Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                        {% for tax in settings %}
+                        <tr>
+                            <td>
+                                <div class="tax-name">{{ tax.tax_name }}</div>
+                                <div class="tax-details">{{ tax.description }}</div>
+                            </td>
+                            <td>
+                                <span class="tax-code">{{ tax.tax_code }}</span>
+                            </td>
+                            <td>
+                                <div class="tax-rate {% if tax.rate == 0 %}zero{% else %}percentage{% endif %}">
+                                    {{ tax.rate }}%
+                                </div>
+                            </td>
+                            <td>
+                                <span class="status-badge {% if tax.status == 'Active' %}active{% else %}inactive{% endif %}">
+                                    {{ tax.status }}
+                                </span>
+                            </td>
+                            <td>
+                                <div class="tax-details">
+                                    <strong>{{ tax.applicable_on }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="tax-details">
+                                    <strong>{{ tax.filing_frequency }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="tax-details">
+                                    <strong>{{ tax.due_date }}</strong>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="exemptions-list">
+                                    <ul>
+                                        {% for exemption in tax.exemptions[:3] %}
+                                        <li>{{ exemption }}</li>
+                        {% endfor %}
+                                        {% if tax.exemptions|length > 3 %}
+                                        <li><em>+{{ tax.exemptions|length - 3 }} more</em></li>
+                                        {% endif %}
+                                    </ul>
+                                </div>
+                            </td>
+                            <td>
+                                <div class="action-buttons">
+                                    <button class="action-btn primary" onclick="editTaxRate({{ tax.id }})">
+                                        <i class="fas fa-edit"></i>
+                                    </button>
+                                    <button class="action-btn secondary" onclick="viewTaxDetails({{ tax.id }})">
+                                        <i class="fas fa-eye"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                </tbody>
+            </table>
+            </div>
+        </div>
+        </div>
+    </div>
+
+<!-- Add Tax Rate Modal -->
+<div class="modal fade" id="addTaxModal" tabindex="-1" aria-labelledby="addTaxModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="addTaxModalLabel">Add New Tax Rate</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+            <div class="modal-body">
+                <form id="addTaxForm">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="taxName" class="form-label">Tax Name *</label>
+                                <input type="text" class="form-control" id="taxName" name="tax_name" required>
+    </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="taxCode" class="form-label">Tax Code *</label>
+                                <input type="text" class="form-control" id="taxCode" name="tax_code" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="taxRate" class="form-label">Rate (%) *</label>
+                                <input type="number" class="form-control" id="taxRate" name="rate" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="taxType" class="form-label">Type *</label>
+                                <select class="form-select" id="taxType" name="type" required>
+                                    <option value="Percentage">Percentage</option>
+                                    <option value="Fixed">Fixed Amount</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="taxStatus" class="form-label">Status *</label>
+                                <select class="form-select" id="taxStatus" name="status" required>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="applicableOn" class="form-label">Applicable On</label>
+                                <select class="form-select" id="applicableOn" name="applicable_on">
+                                    <option value="Sales">Sales</option>
+                                    <option value="Services">Services</option>
+                                    <option value="Supplies">Supplies</option>
+                                    <option value="Imports">Imports</option>
+                                    <option value="Profit">Profit</option>
+                                    <option value="Banking">Banking</option>
+                                    <option value="Specific Goods">Specific Goods</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="filingFrequency" class="form-label">Filing Frequency</label>
+                                <select class="form-select" id="filingFrequency" name="filing_frequency">
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="Quarterly">Quarterly</option>
+                                    <option value="Annual">Annual</option>
+                                    <option value="Per Import">Per Import</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="taxDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="taxDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="registrationNumber" class="form-label">Registration Number</label>
+                        <input type="text" class="form-control" id="registrationNumber" name="registration_number">
+                    </div>
+                    <div class="mb-3">
+                        <label for="dueDate" class="form-label">Due Date</label>
+                        <input type="text" class="form-control" id="dueDate" name="due_date" placeholder="e.g., 15th of following month">
+                    </div>
+                    <div class="mb-3">
+                        <label for="exemptions" class="form-label">Exemptions (one per line)</label>
+                        <textarea class="form-control" id="exemptions" name="exemptions" rows="3" placeholder="Agricultural Products&#10;Export Sales&#10;Educational Materials"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="saveTaxRate()">Save Tax Rate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Edit Tax Rate Modal -->
+<div class="modal fade" id="editTaxModal" tabindex="-1" aria-labelledby="editTaxModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="editTaxModalLabel">Edit Tax Rate</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                <form id="editTaxForm">
+                    <input type="hidden" id="editTaxId" name="id">
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editTaxName" class="form-label">Tax Name *</label>
+                                <input type="text" class="form-control" id="editTaxName" name="tax_name" required>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editTaxCode" class="form-label">Tax Code *</label>
+                                <input type="text" class="form-control" id="editTaxCode" name="tax_code" required>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="editTaxRate" class="form-label">Rate (%) *</label>
+                                <input type="number" class="form-control" id="editTaxRate" name="rate" step="0.01" required>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="editTaxType" class="form-label">Type *</label>
+                                <select class="form-select" id="editTaxType" name="type" required>
+                                    <option value="Percentage">Percentage</option>
+                                    <option value="Fixed">Fixed Amount</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-4">
+                            <div class="mb-3">
+                                <label for="editTaxStatus" class="form-label">Status *</label>
+                                <select class="form-select" id="editTaxStatus" name="status" required>
+                                    <option value="Active">Active</option>
+                                    <option value="Inactive">Inactive</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editApplicableOn" class="form-label">Applicable On</label>
+                                <select class="form-select" id="editApplicableOn" name="applicable_on">
+                                    <option value="Sales">Sales</option>
+                                    <option value="Services">Services</option>
+                                    <option value="Supplies">Supplies</option>
+                                    <option value="Imports">Imports</option>
+                                    <option value="Profit">Profit</option>
+                                    <option value="Banking">Banking</option>
+                                    <option value="Specific Goods">Specific Goods</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="col-md-6">
+                            <div class="mb-3">
+                                <label for="editFilingFrequency" class="form-label">Filing Frequency</label>
+                                <select class="form-select" id="editFilingFrequency" name="filing_frequency">
+                                    <option value="Monthly">Monthly</option>
+                                    <option value="Quarterly">Quarterly</option>
+                                    <option value="Annual">Annual</option>
+                                    <option value="Per Import">Per Import</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editTaxDescription" class="form-label">Description</label>
+                        <textarea class="form-control" id="editTaxDescription" name="description" rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label for="editRegistrationNumber" class="form-label">Registration Number</label>
+                        <input type="text" class="form-control" id="editRegistrationNumber" name="registration_number">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editDueDate" class="form-label">Due Date</label>
+                        <input type="text" class="form-control" id="editDueDate" name="due_date">
+                    </div>
+                    <div class="mb-3">
+                        <label for="editExemptions" class="form-label">Exemptions (one per line)</label>
+                        <textarea class="form-control" id="editExemptions" name="exemptions" rows="3"></textarea>
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+                <button type="button" class="btn btn-primary" onclick="updateTaxRate()">Update Tax Rate</button>
+                <button type="button" class="btn btn-danger" onclick="deleteTaxRate()">Delete Tax Rate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- View Tax Details Modal -->
+<div class="modal fade" id="viewTaxModal" tabindex="-1" aria-labelledby="viewTaxModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="viewTaxModalLabel">Tax Rate Details</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="viewTaxContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary" onclick="editCurrentTax()">Edit Tax Rate</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Compliance Report Modal -->
+<div class="modal fade" id="complianceModal" tabindex="-1" aria-labelledby="complianceModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-xl">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="complianceModalLabel">Tax Compliance Report</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" id="complianceContent">
+                <!-- Content will be loaded dynamically -->
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-success" onclick="exportComplianceReport()">Export Report</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let currentTaxId = null;
+
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Tax settings page loaded successfully');
+    
+    // Add click tracking for analytics
+    const actionButtons = document.querySelectorAll('.action-btn');
+    actionButtons.forEach(btn => {
+        btn.addEventListener('click', function() {
+            const action = this.textContent.trim();
+            console.log('Tax settings action:', action);
+        });
+    });
+});
+
+// Add Tax Rate Functions
+function addTaxRate() {
+    console.log('Opening add tax rate modal');
+    const modal = new bootstrap.Modal(document.getElementById('addTaxModal'));
+    modal.show();
+}
+
+function saveTaxRate() {
+    const form = document.getElementById('addTaxForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Convert exemptions textarea to array
+    data.exemptions = data.exemptions.split('\n').filter(item => item.trim() !== '');
+    
+    console.log('Saving tax rate:', data);
+    
+    fetch('/settings/api/tax-rates', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(data)
+    })
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert('Tax rate created successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('addTaxModal')).hide();
+            form.reset();
+            // Refresh the page to show new tax rate
+            location.reload();
+        } else {
+            alert('Error creating tax rate: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error creating tax rate');
+    });
+}
+
+// Edit Tax Rate Functions
+function editTaxRate(taxId) {
+    console.log('Opening edit tax rate modal for ID:', taxId);
+    currentTaxId = taxId;
+    
+    // Fetch tax rate details
+    fetch(`/settings/api/tax-rates/${taxId}`)
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            const tax = result.tax_rate;
+            
+            // Populate edit form
+            document.getElementById('editTaxId').value = tax.id;
+            document.getElementById('editTaxName').value = tax.tax_name;
+            document.getElementById('editTaxCode').value = tax.tax_code;
+            document.getElementById('editTaxRate').value = tax.rate;
+            document.getElementById('editTaxType').value = tax.type;
+            document.getElementById('editTaxStatus').value = tax.status;
+            document.getElementById('editApplicableOn').value = tax.applicable_on;
+            document.getElementById('editFilingFrequency').value = tax.filing_frequency;
+            document.getElementById('editTaxDescription').value = tax.description;
+            document.getElementById('editRegistrationNumber').value = tax.registration_number;
+            document.getElementById('editDueDate').value = tax.due_date;
+            document.getElementById('editExemptions').value = tax.exemptions.join('\n');
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('editTaxModal'));
+            modal.show();
+        } else {
+            alert('Error fetching tax rate details: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error fetching tax rate details');
+    });
+}
+
+function updateTaxRate() {
+    const form = document.getElementById('editTaxForm');
+    const formData = new FormData(form);
+    const data = Object.fromEntries(formData.entries());
+    
+    // Convert exemptions textarea to array
+    data.exemptions = data.exemptions.split('\n').filter(item => item.trim() !== '');
+    
+    console.log('Updating tax rate:', data);
+    
+    fetch(`/settings/api/tax-rates/${currentTaxId}`, {
+        method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+        body: JSON.stringify(data)
+        })
+        .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            alert('Tax rate updated successfully!');
+            bootstrap.Modal.getInstance(document.getElementById('editTaxModal')).hide();
+            // Refresh the page to show updated tax rate
+                location.reload();
+            } else {
+            alert('Error updating tax rate: ' + result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+        alert('Error updating tax rate');
+    });
+}
+
+function deleteTaxRate() {
+    if (confirm('Are you sure you want to delete this tax rate? This action cannot be undone.')) {
+        console.log('Deleting tax rate:', currentTaxId);
+        
+        fetch(`/settings/api/tax-rates/${currentTaxId}`, {
+            method: 'DELETE'
+        })
+        .then(response => response.json())
+        .then(result => {
+            if (result.success) {
+                alert('Tax rate deleted successfully!');
+                bootstrap.Modal.getInstance(document.getElementById('editTaxModal')).hide();
+                // Refresh the page to show updated tax rates
+                location.reload();
+            } else {
+                alert('Error deleting tax rate: ' + result.error);
+            }
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            alert('Error deleting tax rate');
+        });
+    }
+}
+
+// View Tax Details Functions
+function viewTaxDetails(taxId) {
+    console.log('Opening view tax details modal for ID:', taxId);
+    currentTaxId = taxId;
+    
+    // Fetch tax rate details
+    fetch(`/settings/api/tax-rates/${taxId}`)
+    .then(response => response.json())
+    .then(result => {
+        if (result.success) {
+            const tax = result.tax_rate;
+            
+            // Create detailed view content
+            const content = `
+                <div class="row">
+                    <div class="col-md-6">
+                        <h6>Basic Information</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Tax Name:</strong></td><td>${tax.tax_name}</td></tr>
+                            <tr><td><strong>Tax Code:</strong></td><td>${tax.tax_code}</td></tr>
+                            <tr><td><strong>Rate:</strong></td><td>${tax.rate}%</td></tr>
+                            <tr><td><strong>Type:</strong></td><td>${tax.type}</td></tr>
+                            <tr><td><strong>Status:</strong></td><td><span class="badge ${tax.status === 'Active' ? 'bg-success' : 'bg-danger'}">${tax.status}</span></td></tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Compliance Information</h6>
+                        <table class="table table-sm">
+                            <tr><td><strong>Applicable On:</strong></td><td>${tax.applicable_on}</td></tr>
+                            <tr><td><strong>Filing Frequency:</strong></td><td>${tax.filing_frequency}</td></tr>
+                            <tr><td><strong>Due Date:</strong></td><td>${tax.due_date}</td></tr>
+                            <tr><td><strong>Registration #:</strong></td><td>${tax.registration_number}</td></tr>
+                            <tr><td><strong>Effective Date:</strong></td><td>${new Date(tax.effective_date).toLocaleDateString()}</td></tr>
+                        </table>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Description</h6>
+                        <p>${tax.description}</p>
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <h6>Exemptions</h6>
+                        <ul class="list-group">
+                            ${tax.exemptions.map(exemption => `<li class="list-group-item">${exemption}</li>`).join('')}
+                        </ul>
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('viewTaxContent').innerHTML = content;
+            
+            // Show modal
+            const modal = new bootstrap.Modal(document.getElementById('viewTaxModal'));
+            modal.show();
+        } else {
+            alert('Error fetching tax rate details: ' + result.error);
+        }
+    })
+    .catch(error => {
+        console.error('Error:', error);
+        alert('Error fetching tax rate details');
+    });
+}
+
+function editCurrentTax() {
+    bootstrap.Modal.getInstance(document.getElementById('viewTaxModal')).hide();
+    editTaxRate(currentTaxId);
+}
+
+// Export Functions
+function exportTaxData() {
+    console.log('Exporting tax data');
+    window.open('/settings/api/export-tax-data', '_blank');
+}
+
+function printTaxSettings() {
+    console.log('Printing tax settings');
+    window.print();
+}
+
+// Compliance Functions
+function viewCompliance() {
+    console.log('Opening compliance report modal');
+    
+    // Create compliance report content
+    const content = `
+        <div class="row">
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Tax Compliance Overview</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="compliance-score text-center mb-3">
+                            <div class="compliance-circle" style="--score: {{ data.compliance_score }}">
+                                <div class="compliance-score-value">{{ data.compliance_score }}%</div>
+                            </div>
+                            <div class="compliance-label">Overall Compliance Score</div>
+                        </div>
+                        <p class="text-muted">Your business maintains a strong tax compliance record with proper documentation and timely filings.</p>
+                    </div>
+                </div>
+            </div>
+            <div class="col-md-6">
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Tax Statistics</h6>
+                    </div>
+                    <div class="card-body">
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 class="text-primary">{{ data.total_tax_rates }}</h4>
+                                <small>Total Tax Rates</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-success">{{ data.active_tax_rates }}</h4>
+                                <small>Active Rates</small>
+                            </div>
+                        </div>
+                        <hr>
+                        <div class="row text-center">
+                            <div class="col-6">
+                                <h4 class="text-info">${{ "%.0f"|format(data.total_tax_collected/1000) }}K</h4>
+                                <small>Tax Collected</small>
+                            </div>
+                            <div class="col-6">
+                                <h4 class="text-warning">${{ "%.0f"|format(data.total_tax_paid/1000) }}K</h4>
+                                <small>Tax Paid</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="row mt-4">
+            <div class="col-12">
+                <div class="card">
+                    <div class="card-header">
+                        <h6>Compliance Recommendations</h6>
+                    </div>
+                    <div class="card-body">
+                        <ul class="list-group list-group-flush">
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Monthly GST Filing
+                                <span class="badge bg-success">Up to Date</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Withholding Tax Returns
+                                <span class="badge bg-success">Up to Date</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Annual Income Tax Return
+                                <span class="badge bg-warning">Due Soon</span>
+                            </li>
+                            <li class="list-group-item d-flex justify-content-between align-items-center">
+                                Customs Duty Documentation
+                                <span class="badge bg-success">Complete</span>
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+    
+    document.getElementById('complianceContent').innerHTML = content;
+    
+    // Show modal
+    const modal = new bootstrap.Modal(document.getElementById('complianceModal'));
+    modal.show();
+}
+
+function exportComplianceReport() {
+    console.log('Exporting compliance report');
+    // Create a simple text report
+    const report = `
+TAX COMPLIANCE REPORT
+Generated: ${new Date().toLocaleString()}
+
+COMPLIANCE SCORE: {{ data.compliance_score }}%
+
+TAX STATISTICS:
+- Total Tax Rates: {{ data.total_tax_rates }}
+- Active Rates: {{ data.active_tax_rates }}
+- Tax Collected: ${{ "%.2f"|format(data.total_tax_collected) }}
+- Tax Paid: ${{ "%.2f"|format(data.total_tax_paid) }}
+- Net Liability: ${{ "%.2f"|format(data.net_tax_liability) }}
+
+RECOMMENDATIONS:
+- Maintain monthly GST filings
+- Keep withholding tax records updated
+- Prepare for annual income tax return
+- Ensure customs documentation is complete
+    `;
+    
+    const blob = new Blob([report], { type: 'text/plain' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'tax_compliance_report.txt';
+    a.click();
+    window.URL.revokeObjectURL(url);
+}
+
+// Auto-refresh compliance score
+setInterval(function() {
+    console.log('Refreshing compliance score...');
+    // In a real application, this would fetch updated data
+}, 300000); // Check every 5 minutes
+</script>
+{% endblock %} 

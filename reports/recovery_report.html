@@ -1,0 +1,491 @@
+{% extends "base.html" %}
+
+{% block title %}Recovery Report - {{ session.current_business.name if session.get('current_business') else 'Business Accounts' }}{% endblock %}
+
+{% block extra_css %}
+<style>
+    .recovery-modern {
+        background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        min-height: 100vh;
+        padding: 20px;
+    }
+
+    .recovery-header {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 40px;
+        border-radius: 20px;
+        margin-bottom: 30px;
+        box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+        position: relative;
+        overflow: hidden;
+    }
+
+    .recovery-header::before {
+        content: '';
+        position: absolute;
+        top: -50%;
+        right: -50%;
+        width: 200%;
+        height: 200%;
+        background: radial-gradient(circle, rgba(255,255,255,0.1) 0%, transparent 70%);
+        animation: float 6s ease-in-out infinite;
+    }
+
+    @keyframes float {
+        0%, 100% { transform: translateY(0px) rotate(0deg); }
+        50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    .recovery-title {
+        font-size: 3rem;
+        font-weight: 800;
+        margin: 0;
+        text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+    }
+
+    .recovery-subtitle {
+        font-size: 1.2rem;
+        opacity: 0.9;
+        margin: 10px 0 0 0;
+    }
+
+    .summary-cards {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+        gap: 20px;
+        margin-bottom: 30px;
+    }
+
+    .summary-card {
+        background: white;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        text-align: center;
+        border-left: 4px solid var(--accent-color);
+    }
+
+    .summary-card.receivables {
+        border-left-color: #28a745;
+    }
+
+    .summary-card.payables {
+        border-left-color: #dc3545;
+    }
+
+    .summary-card.net {
+        border-left-color: #667eea;
+    }
+
+    .summary-number {
+        font-size: 2.5rem;
+        font-weight: 800;
+        margin: 0;
+    }
+
+    .summary-number.receivables {
+        color: #28a745;
+    }
+
+    .summary-number.payables {
+        color: #dc3545;
+    }
+
+    .summary-number.net {
+        color: #667eea;
+    }
+
+    .summary-label {
+        color: #6c757d;
+        font-size: 0.9rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-top: 5px;
+    }
+
+    .aging-section {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        margin-bottom: 30px;
+        overflow: hidden;
+    }
+
+    .aging-header {
+        background: #f8f9fa;
+        padding: 20px;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .aging-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0;
+    }
+
+    .aging-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+        gap: 0;
+    }
+
+    .aging-card {
+        padding: 20px;
+        text-align: center;
+        border-right: 1px solid #e9ecef;
+    }
+
+    .aging-card:last-child {
+        border-right: none;
+    }
+
+    .aging-card.current {
+        background: #e8f5e8;
+    }
+
+    .aging-card.thirty-days {
+        background: #fff3e0;
+    }
+
+    .aging-card.sixty-days {
+        background: #ffebee;
+    }
+
+    .aging-card.overdue {
+        background: #fce4ec;
+    }
+
+    .aging-period {
+        font-size: 0.9rem;
+        font-weight: 600;
+        color: #6c757d;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        margin-bottom: 5px;
+    }
+
+    .aging-amount {
+        font-size: 1.5rem;
+        font-weight: 800;
+        color: #2c3e50;
+        margin-bottom: 5px;
+    }
+
+    .aging-count {
+        font-size: 0.9rem;
+        color: #6c757d;
+    }
+
+    .section-header {
+        background: white;
+        padding: 20px;
+        border-radius: 15px;
+        margin-bottom: 20px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        border-left: 5px solid var(--accent-color);
+    }
+
+    .section-title {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #2c3e50;
+        margin: 0 0 10px 0;
+    }
+
+    .section-subtitle {
+        color: #6c757d;
+        font-size: 0.9rem;
+    }
+
+    .table-container {
+        background: white;
+        border-radius: 15px;
+        box-shadow: 0 5px 15px rgba(0,0,0,0.08);
+        overflow: hidden;
+        margin-bottom: 30px;
+    }
+
+    .data-table {
+        width: 100%;
+        border-collapse: collapse;
+    }
+
+    .data-table th {
+        background: #f8f9fa;
+        padding: 15px;
+        text-align: left;
+        font-weight: 700;
+        color: #2c3e50;
+        border-bottom: 2px solid #e9ecef;
+    }
+
+    .data-table td {
+        padding: 15px;
+        border-bottom: 1px solid #e9ecef;
+        vertical-align: top;
+    }
+
+    .data-table tbody tr:hover {
+        background: #f8f9fa;
+    }
+
+    .amount {
+        font-weight: 700;
+        text-align: right;
+    }
+
+    .amount.positive {
+        color: #28a745;
+    }
+
+    .amount.negative {
+        color: #dc3545;
+    }
+
+    .status-badge {
+        display: inline-block;
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .status-badge.current {
+        background: #e8f5e8;
+        color: #388e3c;
+    }
+
+    .status-badge.overdue {
+        background: #ffebee;
+        color: #d32f2f;
+    }
+
+    .no-data {
+        text-align: center;
+        padding: 60px 20px;
+        color: #6c757d;
+    }
+
+    .no-data i {
+        font-size: 4rem;
+        margin-bottom: 20px;
+        opacity: 0.5;
+    }
+
+    @media (max-width: 768px) {
+        .recovery-title {
+            font-size: 2rem;
+        }
+        
+        .aging-grid {
+            grid-template-columns: 1fr;
+        }
+        
+        .aging-card {
+            border-right: none;
+            border-bottom: 1px solid #e9ecef;
+        }
+        
+        .aging-card:last-child {
+            border-bottom: none;
+        }
+        
+        .data-table {
+            font-size: 0.9rem;
+        }
+        
+        .data-table th,
+        .data-table td {
+            padding: 10px 8px;
+        }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="recovery-modern">
+    <!-- Recovery Header -->
+    <div class="recovery-header">
+        <h1 class="recovery-title">Recovery Report</h1>
+        <p class="recovery-subtitle">Outstanding receivables and payables analysis</p>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="summary-cards">
+        <div class="summary-card receivables">
+            <h2 class="summary-number receivables">${{ "%.2f"|format(data.total_receivables) }}</h2>
+            <p class="summary-label">Total Receivables</p>
+        </div>
+        <div class="summary-card payables">
+            <h2 class="summary-number payables">${{ "%.2f"|format(data.total_payables) }}</h2>
+            <p class="summary-label">Total Payables</p>
+        </div>
+        <div class="summary-card net">
+            <h2 class="summary-number net">${{ "%.2f"|format(data.total_receivables - data.total_payables) }}</h2>
+            <p class="summary-label">Net Position</p>
+        </div>
+    </div>
+
+    <!-- Aging Analysis -->
+    <div class="aging-section">
+        <div class="aging-header">
+            <h3 class="aging-title">Receivables Aging Analysis</h3>
+        </div>
+        <div class="aging-grid">
+            <div class="aging-card current">
+                <div class="aging-period">Current (0-30 days)</div>
+                <div class="aging-amount">${{ "%.2f"|format(data.aging_totals.current) }}</div>
+                <div class="aging-count">{{ data.aging_receivables.current|length }} customers</div>
+            </div>
+            <div class="aging-card thirty-days">
+                <div class="aging-period">31-60 days</div>
+                <div class="aging-amount">${{ "%.2f"|format(data.aging_totals['30_days']) }}</div>
+                <div class="aging-count">{{ data.aging_receivables['30_days']|length }} customers</div>
+            </div>
+            <div class="aging-card sixty-days">
+                <div class="aging-period">61-90 days</div>
+                <div class="aging-amount">${{ "%.2f"|format(data.aging_totals['60_days']) }}</div>
+                <div class="aging-count">{{ data.aging_receivables['60_days']|length }} customers</div>
+            </div>
+            <div class="aging-card overdue">
+                <div class="aging-period">Overdue (90+ days)</div>
+                <div class="aging-amount">${{ "%.2f"|format(data.aging_totals.overdue) }}</div>
+                <div class="aging-count">{{ data.aging_receivables.overdue|length }} customers</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Outstanding Receivables -->
+    <div class="section-header">
+        <h3 class="section-title">Outstanding Receivables</h3>
+        <p class="section-subtitle">Customers with outstanding balances requiring collection</p>
+    </div>
+
+    <div class="table-container">
+        {% if data.receivables %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Customer Name</th>
+                    <th>Contact</th>
+                    <th>Outstanding Balance</th>
+                    <th>Credit Limit</th>
+                    <th>Status</th>
+                    <th>Last Contact</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for customer in data.receivables %}
+                <tr>
+                    <td>
+                        <strong>{{ customer.name }}</strong>
+                        {% if customer.contact_person %}
+                        <br><small class="text-muted">{{ customer.contact_person }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if customer.email %}{{ customer.email }}<br>{% endif %}
+                        {% if customer.phone %}{{ customer.phone }}{% endif %}
+                    </td>
+                    <td class="amount positive">${{ "%.2f"|format(customer.current_balance) }}</td>
+                    <td class="amount">${{ "%.2f"|format(customer.credit_limit) }}</td>
+                    <td>
+                        {% if customer.current_balance <= 1000 %}
+                        <span class="status-badge current">Current</span>
+                        {% else %}
+                        <span class="status-badge overdue">Overdue</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ customer.updated_at.strftime('%Y-%m-%d') if customer.updated_at else 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-data">
+            <i class="fas fa-check-circle"></i>
+            <h4>No Outstanding Receivables</h4>
+            <p>All customers have zero or negative balances.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Outstanding Payables -->
+    <div class="section-header">
+        <h3 class="section-title">Outstanding Payables</h3>
+        <p class="section-subtitle">Suppliers with outstanding balances requiring payment</p>
+    </div>
+
+    <div class="table-container">
+        {% if data.payables %}
+        <table class="data-table">
+            <thead>
+                <tr>
+                    <th>Supplier Name</th>
+                    <th>Contact</th>
+                    <th>Outstanding Balance</th>
+                    <th>Payment Terms</th>
+                    <th>Status</th>
+                    <th>Last Contact</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for supplier in data.payables %}
+                <tr>
+                    <td>
+                        <strong>{{ supplier.name }}</strong>
+                        {% if supplier.contact_person %}
+                        <br><small class="text-muted">{{ supplier.contact_person }}</small>
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if supplier.email %}{{ supplier.email }}<br>{% endif %}
+                        {% if supplier.phone %}{{ supplier.phone }}{% endif %}
+                    </td>
+                    <td class="amount negative">${{ "%.2f"|format(abs(supplier.current_balance)) }}</td>
+                    <td>{{ supplier.payment_terms or 'N/A' }}</td>
+                    <td>
+                        {% if abs(supplier.current_balance) <= 1000 %}
+                        <span class="status-badge current">Current</span>
+                        {% else %}
+                        <span class="status-badge overdue">Overdue</span>
+                        {% endif %}
+                    </td>
+                    <td>{{ supplier.updated_at.strftime('%Y-%m-%d') if supplier.updated_at else 'N/A' }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        {% else %}
+        <div class="no-data">
+            <i class="fas fa-check-circle"></i>
+            <h4>No Outstanding Payables</h4>
+            <p>All suppliers have zero or positive balances.</p>
+        </div>
+        {% endif %}
+    </div>
+
+    <!-- Report Footer -->
+    <div class="text-center py-4">
+        <small class="text-muted">
+            Report generated on {{ data.generated_at }}
+        </small>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('Recovery report loaded successfully');
+    
+    // Add any additional JavaScript functionality here
+    // For example, export functionality, filtering, etc.
+});
+</script>
+{% endblock %}
