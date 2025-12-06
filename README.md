@@ -1,6 +1,22 @@
-# Multi-Business Accounts Management System
+## 🏢 BALANCEHUB
+---
 
-A professional, desktop-like web application for managing accounts and business operations for multiple businesses. Built with Flask and designed to look and feel like traditional desktop accounting software. Supports multi-tenancy, allowing multiple businesses to use the same system while maintaining complete data separation.
+## 🏢 About the Developer
+
+This system is proudly developed by **Digizone Solutions**, a modern technology company focused on building scalable, enterprise-grade software solutions.
+
+### 👨‍💼 Lead Developer  
+**Huzaifa Ihsan**  
+CEO & Founder — Digizone Solutions  
+Architect of the Multi-Business Accounts Management System  
+✔ Full-Stack Developer  
+✔ System Designer  
+✔ Automation Specialist  
+
+🌐 Official Website: https://digizonesolutions.online  
+👤 Personal Portfolio: https://huzaifaihsan.me
+
+---
 
 ## Features
 
@@ -277,3 +293,4 @@ This application is designed specifically for pesticides businesses in Pakistan 
 ## License
 
 This project is open source and available under the MIT License.
+
