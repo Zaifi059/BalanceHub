@@ -1,0 +1,260 @@
+[2025-11-02 02:19:30,726] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+[2025-11-02 02:19:31,201] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+[2025-11-02 02:29:03,505] ERROR in accounts: Error viewing vendor bill: 'today' is undefined
+[2025-11-02 02:37:02,971] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+[2025-11-02 02:41:01,342] ERROR in app: Exception on /business/1 [GET]
+Traceback (most recent call last):
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/account.urpos.website/app/business.py", line 259, in show
+    return render_template('business/show.html',
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/urpozdqj/account.urpos.website/app/templates/business/show.html", line 1, in top-level template code
+    {% extends "base.html" %}
+  File "/home/urpozdqj/account.urpos.website/app/templates/base.html", line 635, in top-level template code
+    {% block content %}{% endblock %}
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/account.urpos.website/app/templates/business/show.html", line 224, in block 'content'
+    <small class="text-muted">{{ activity.timestamp.strftime('%b %d, %H:%M') }}</small>
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/jinja2/environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'dict object' has no attribute 'timestamp'
+Updated Accounts Payable: -66000.0 (type: liability)
+WARNING: Account 'Z.A CROP SCIENCES' not found in Chart of Accounts
+Account balances updated for Journal Entry 15
+Updated BankAccount balance: 353660.0
+Cash Account: Rs. -50250
+Z.A CROP SCIENCES (MCB): Rs. 353660.0
+Updated Cash & Bank: Rs. 369660 -> Rs. 303410.0 (Difference: Rs. 66250.0)
+Cash & Bank account synced successfully!
+[2025-11-02 03:13:42,570] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+[2025-11-02 03:16:08,134] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+[2025-11-02 03:16:17,450] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+io.UnsupportedOperation: fileno
+[2025-11-04 07:30:54,363] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+[2025-11-04 07:31:17,091] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+[2025-11-08 09:34:49,048] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+[2025-11-08 09:34:52,834] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+[2025-11-08 09:35:13,742] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+[2025-11-11 05:07:58,224] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+[2025-11-11 05:09:25,706] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+[2025-11-11 05:10:15,390] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+[2025-11-11 05:11:24,761] WARNING in accounts: No 'Bank Accounts' entry found in Chart of Accounts for business 1
+Purchase order 0005 created as pending vendor bill
+Updated Inventory: 904905.0 (type: asset)
+Updated Accounts Payable: 249000.0 (type: liability)
+Account balances updated for Journal Entry 17
+Cash Account: Rs. -50250
+Z.A CROP SCIENCES (MCB): Rs. 353660
+Cash & Bank already in sync: Rs. 303410 (Difference: Rs. 0.0)
+Cash & Bank account synced successfully!
+Updated Accounts Payable: -66000.0 (type: liability)
+WARNING: Account 'Z.A CROP SCIENCES' not found in Chart of Accounts
+Account balances updated for Journal Entry 18
+Updated BankAccount balance: 38660.0
+Cash Account: Rs. -50250
+Z.A CROP SCIENCES (MCB): Rs. 38660.0
+Updated Cash & Bank: Rs. 303410 -> Rs. -11590.0 (Difference: Rs. 315000.0)
+Cash & Bank account synced successfully!
+Updated Accounts Receivable: 70440.0 (type: asset)
+Updated Sales Revenue: 86440.0 (type: revenue)
+Updated Cost of Goods Sold: 56785.0 (type: expense)
+Updated Inventory: 904805.0 (type: asset)
+Account balances updated for Journal Entry 19
+Updated Accounts Receivable: 106940.0 (type: asset)
+Updated Sales Revenue: 122940.0 (type: revenue)
+Updated Cost of Goods Sold: 57785.0 (type: expense)
+Updated Inventory: 903805.0 (type: asset)
+Updated Cost of Goods Sold: 58785.0 (type: expense)
+Updated Inventory: 902805.0 (type: asset)
+Account balances updated for Journal Entry 20
+Updated Accounts Receivable: 148340.0 (type: asset)
+Updated Sales Revenue: 164340.0 (type: revenue)
+Updated Cost of Goods Sold: 64365.0 (type: expense)
+Updated Inventory: 897225.0 (type: asset)
+Updated Cost of Goods Sold: 72165.0 (type: expense)
+Updated Inventory: 889425.0 (type: asset)
+Updated Cost of Goods Sold: 80265.0 (type: expense)
+Updated Inventory: 881325.0 (type: asset)
+Updated Cost of Goods Sold: 88215.0 (type: expense)
+Updated Inventory: 873375.0 (type: asset)
+Account balances updated for Journal Entry 21
+Updated Cash & Bank: 4910.0 (type: asset)
+Updated Accounts Receivable: 131840.0 (type: asset)
+Account balances updated for Journal Entry 22
+Updated BankAccount balance: 55160.0
+Cash Account: Rs. -50250
+Z.A CROP SCIENCES (MCB): Rs. 55160.0
+Cash & Bank already in sync: Rs. 4910 (Difference: Rs. 0.0)
+Cash & Bank account synced successfully!
+[2025-11-20 12:37:54,558] ERROR in app: Exception on /sales/receipts [GET]
+Traceback (most recent call last):
+  File "/home/urpozdqj/account.urpos.website/app/sales.py", line 192, in receipts
+    return render_template('sales/receipts.html',
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/urpozdqj/account.urpos.website/app/templates/sales/receipts.html", line 6, in top-level template code
+    <title>Invoice {{ invoice.invoice_number }}</title>
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/jinja2/environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'invoice' is undefined
+
+During handling of the above exception, another exception occurred:
+
+Traceback (most recent call last):
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/account.urpos.website/app/sales.py", line 200, in receipts
+    return render_template('sales/receipts.html',
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/templating.py", line 151, in render_template
+    return _render(app, template, context)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/templating.py", line 132, in _render
+    rv = template.render(context)
+         ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/jinja2/environment.py", line 1295, in render
+    self.environment.handle_exception()
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/jinja2/environment.py", line 942, in handle_exception
+    raise rewrite_traceback_stack(source=source)
+  File "/home/urpozdqj/account.urpos.website/app/templates/sales/receipts.html", line 6, in top-level template code
+    <title>Invoice {{ invoice.invoice_number }}</title>
+    ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/jinja2/environment.py", line 490, in getattr
+    return getattr(obj, attribute)
+           ^^^^^^^^^^^^^^^^^^^^^^^
+jinja2.exceptions.UndefinedError: 'invoice' is undefined
+[2025-11-20 12:45:50,929] ERROR in app: Exception on /hr/performance-reviews [GET]
+Traceback (most recent call last):
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/app.py", line 2190, in wsgi_app
+    response = self.full_dispatch_request()
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/app.py", line 1486, in full_dispatch_request
+    rv = self.handle_user_exception(e)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/app.py", line 1484, in full_dispatch_request
+    rv = self.dispatch_request()
+         ^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/app.py", line 1469, in dispatch_request
+    return self.ensure_sync(self.view_functions[rule.endpoint])(**view_args)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask_login/utils.py", line 290, in decorated_view
+    return current_app.ensure_sync(func)(*args, **kwargs)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/account.urpos.website/app/hr.py", line 468, in performance_reviews
+    return render_template('hr/performance_reviews.html', reviews=reviews)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/templating.py", line 150, in render_template
+    template = app.jinja_env.get_or_select_template(template_name_or_list)
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/jinja2/environment.py", line 1087, in get_or_select_template
+    return self.get_template(template_name_or_list, parent, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/jinja2/environment.py", line 1016, in get_template
+    return self._load_template(name, globals)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/jinja2/environment.py", line 975, in _load_template
+    template = self.loader.load(self, name, self.make_globals(globals))
+               ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/jinja2/loaders.py", line 126, in load
+    source, filename, uptodate = self.get_source(environment, name)
+                                 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/templating.py", line 64, in get_source
+    return self._get_source_fast(environment, template)
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "/home/urpozdqj/virtualenv/account.urpos.website/3.12/lib/python3.12/site-packages/flask/templating.py", line 98, in _get_source_fast
+    raise TemplateNotFound(template)
+jinja2.exceptions.TemplateNotFound: hr/performance_reviews.html
+Error in receipts route: 'invoice' is undefined
+Updated Accounts Payable: -66000.0 (type: liability)
+Updated Cash & Bank: -130090.0 (type: asset)
+Account balances updated for Journal Entry 24
+Updated CashAccount balance: -185250.0
+Cash Account: Rs. -185250.0
+Z.A CROP SCIENCES (MCB): Rs. 55160
+Cash & Bank already in sync: Rs. -130090 (Difference: Rs. 0.0)
+Cash & Bank account synced successfully!
+Updated Accounts Receivable: 403880.0 (type: asset)
+Updated Sales Revenue: 436380.0 (type: revenue)
+Updated Cost of Goods Sold: 110535.0 (type: expense)
+Updated Inventory: 986055.0 (type: asset)
+Updated Cost of Goods Sold: 115535.0 (type: expense)
+Updated Inventory: 981055.0 (type: asset)
+Updated Cost of Goods Sold: 147935.0 (type: expense)
+Updated Inventory: 948655.0 (type: asset)
+Updated Cost of Goods Sold: 154935.0 (type: expense)
+Updated Inventory: 941655.0 (type: asset)
+Updated Cost of Goods Sold: 186135.0 (type: expense)
+Updated Inventory: 910455.0 (type: asset)
+Updated Cost of Goods Sold: 192635.0 (type: expense)
+Updated Inventory: 903955.0 (type: asset)
+Updated Cost of Goods Sold: 264185.0 (type: expense)
+Updated Inventory: 832405.0 (type: asset)
+Updated Cost of Goods Sold: 267185.0 (type: expense)
+Updated Inventory: 829405.0 (type: asset)
+Account balances updated for Journal Entry 25
+Updated Accounts Receivable: 415580.0 (type: asset)
+Updated Sales Revenue: 448080.0 (type: revenue)
+Updated Cost of Goods Sold: 275135.0 (type: expense)
+Updated Inventory: 821455.0 (type: asset)
+Account balances updated for Journal Entry 26
+Updated Accounts Receivable: 430380.0 (type: asset)
+Updated Sales Revenue: 462880.0 (type: revenue)
+Updated Cost of Goods Sold: 280135.0 (type: expense)
+Updated Inventory: 816455.0 (type: asset)
+Updated Cost of Goods Sold: 287135.0 (type: expense)
+Updated Inventory: 809455.0 (type: asset)
+Account balances updated for Journal Entry 27
+/home/urpozdqj/account.urpos.website/app/invoices.py:875: SAWarning: DELETE statement on table 'invoice_item' expected to delete 2 row(s); 0 were matched.  Please set confirm_deleted_rows=False within the mapper configuration to prevent this warning.
+  db.session.commit()
+/home/urpozdqj/account.urpos.website/app/invoices.py:875: SAWarning: DELETE statement on table 'invoice' expected to delete 1 row(s); 0 were matched.  Please set confirm_deleted_rows=False within the mapper configuration to prevent this warning.
+  db.session.commit()
