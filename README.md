@@ -1,4 +1,4 @@
-## 🏢 BALANCEHUB
+## 💻 BALANCEHUB
 ---
 
 ## 🏢 About the Developer
@@ -293,4 +293,5 @@ This application is designed specifically for pesticides businesses in Pakistan 
 ## License
 
 This project is open source and available under the MIT License.
+
 
